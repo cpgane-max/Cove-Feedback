@@ -450,19 +450,23 @@ function sydneyTimestamp() {
   return Utilities.formatDate(new Date(), TZ, "dd/MM/yyyy HH:mm:ss");
 }
 
-function doGet(e) {
-  var ss    = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheets()[0];
-  var rows  = sheet.getDataRange().getValues();
-  var headers = rows[0];
-  var data = rows.slice(1).map(function(row, i) {
-    var obj = {rowIndex: i + 2};
-    headers.forEach(function(h, j){ obj[h] = row[j]; });
-    return obj;
-  });
+function corsResponse(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var ss      = SpreadsheetApp.openById(SHEET_ID);
+  var sheet   = ss.getSheets()[0];
+  var rows    = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var data = rows.slice(1).map(function(row, i) {
+    var obj = { rowIndex: i + 2 };
+    headers.forEach(function(h, j) { obj[h] = row[j] ? String(row[j]) : ""; });
+    return obj;
+  });
+  return corsResponse(data);
 }
 
 function doPost(e) {
@@ -483,31 +487,44 @@ function doPost(e) {
     });
   }
 
+  var now = sydneyTimestamp();
+
   if (data.action === "update" && data.rowIndex) {
-    // UPDATE existing row
-    var row = parseInt(data.rowIndex);
+    var row     = parseInt(data.rowIndex);
     var headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
-    var existingMedia = sheet.getRange(row, headers.indexOf("Media")+1).getValue();
+    var mediaCol = headers.indexOf("Media") + 1;
+    var existingMedia = mediaCol > 0 ? sheet.getRange(row, mediaCol).getValue() : "";
     var allMedia = [existingMedia, mediaLinks.join(", ")].filter(Boolean).join(", ");
     sheet.getRange(row, 1, 1, 11).setValues([[
-      data["Date/Time"], data["Resident Name"], data["How Logged"],
-      data["Issue"], data["Action Taken"], data["Response to Resident"],
-      data["Cost"], allMedia,
-      data["Other Comments"], data["Last Updated"], data["Logged By"]
+      data["Date/Time"]   || now,
+      data["Resident Name"],
+      data["How Logged"],
+      data["Issue"],
+      data["Action Taken"],
+      data["Response to Resident"],
+      data["Cost"],
+      allMedia,
+      data["Other Comments"],
+      data["Last Updated"] || now,
+      data["Logged By"]
     ]]);
   } else {
-    // NEW row
     sheet.appendRow([
-      data["Date/Time"], data["Resident Name"], data["How Logged"],
-      data["Issue"], data["Action Taken"], data["Response to Resident"],
-      data["Cost"], mediaLinks.join(", "),
-      data["Other Comments"], data["Last Updated"] || sydneyTimestamp(), data["Logged By"]
+      data["Date/Time"]   || now,
+      data["Resident Name"],
+      data["How Logged"],
+      data["Issue"],
+      data["Action Taken"],
+      data["Response to Resident"],
+      data["Cost"],
+      mediaLinks.join(", "),
+      data["Other Comments"],
+      data["Last Updated"] || now,
+      data["Logged By"]
     ]);
   }
 
-  return ContentService
-    .createTextOutput(JSON.stringify({result:"success"}))
-    .setMimeType(ContentService.MimeType.JSON);
+  return corsResponse({result: "success", timestamp: now});
 }
 </pre>
 
@@ -530,7 +547,7 @@ function doPost(e) {
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyu2JM_H4RdgPVir7GtE2qr6SrU8MbKmA36D8Gj-axUX8iwgynfs0VcXI8R0tmZUk-xiQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxGD8spEdz3DaZVf9V-cUMEjpTeyxlrpaDHvaTVytJysEruv6CCA4qNrxK_PpM3KNGSMQ/exec";
 const TZ = "Australia/Sydney";
 
 // ── SYDNEY TIME HELPERS ──
@@ -667,7 +684,12 @@ document.getElementById('issue-form').addEventListener('submit', async function(
     "files": filesPayload
   };
   try {
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const resp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
     showToast('✓ Issue logged!'+(filesPayload.length?' Files saved to Drive.':''),'success');
     resetForm(); allIssues=null;
   } catch(err) { showToast('Error connecting to Google','error'); }
@@ -900,7 +922,12 @@ async function saveEdit() {
   };
 
   try {
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const resp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
     showToast('✓ Issue updated successfully!','success');
     closeEditModal();
     allIssues = null; // force reload
