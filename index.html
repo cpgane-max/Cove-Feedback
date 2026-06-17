@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --blue-dark:   #1E3F5C;
       --blue:        #2C5F8A;
@@ -22,303 +21,181 @@
       --white:       #FFFFFF;
       --red:         #C0392B;
       --green:       #1E7E5A;
-      --green-light: #E8F6F0;
       --mono:        'Courier New', monospace;
     }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--slate); min-height: 100vh; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--slate);
-      min-height: 100vh;
-    }
-
-    /* ── HEADER ── */
+    /* HEADER */
     header {
-      background: var(--blue-dark);
-      color: white;
-      padding: 0 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: var(--blue-dark); color: white;
+      padding: 0 2rem; display: flex; align-items: center;
+      justify-content: space-between; height: 64px;
+      position: sticky; top: 0; z-index: 100;
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
     .header-left { display: flex; align-items: center; gap: 14px; }
-    .header-icon {
-      width: 36px; height: 36px;
-      background: var(--amber);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.01em; }
-    header p  { font-size: 0.72rem; color: #93BFDA; margin-top: 1px; }
-    .header-right { display: flex; align-items: center; gap: 10px; }
-    #live-clock {
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      color: #93BFDA;
-      letter-spacing: 0.04em;
-    }
-    .btn-xs {
-      padding: 5px 14px;
-      background: var(--amber);
-      color: white;
-      border: none; border-radius: 6px;
-      font-size: 0.78rem; font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-xs:hover { background: #C88A10; }
+    .header-icon { width:36px;height:36px;background:var(--amber);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px; }
+    header h1 { font-size:1.1rem;font-weight:600;letter-spacing:.01em; }
+    header p  { font-size:.72rem;color:#93BFDA;margin-top:1px; }
+    .header-right { display:flex;align-items:center;gap:10px; }
+    #live-clock { font-family:var(--mono);font-size:.78rem;color:#93BFDA;letter-spacing:.04em; }
+    .btn-xs { padding:5px 14px;background:var(--amber);color:white;border:none;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer; }
+    .btn-xs:hover { background:#C88A10; }
 
-    /* ── MAIN LAYOUT ── */
-    main {
-      max-width: 860px;
-      margin: 2rem auto;
-      padding: 0 1.5rem 4rem;
+    /* TABS */
+    .tabs { background:var(--white); border-bottom:1px solid var(--border); display:flex; padding:0 2rem; max-width:860px; margin:0 auto; }
+    .tab-btn {
+      padding:14px 20px; font-size:.875rem; font-weight:500; color:var(--slate-light);
+      border:none; background:none; cursor:pointer; border-bottom:3px solid transparent;
+      transition:color .15s, border-color .15s; margin-bottom:-1px;
     }
+    .tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; }
+    .tab-btn:hover:not(.active) { color:var(--slate); }
 
+    /* MAIN */
+    main { max-width:860px; margin:2rem auto; padding:0 1.5rem 4rem; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* SECTION LABEL */
     .section-label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--blue-mid);
-      margin-bottom: 1.1rem;
-      padding-bottom: 6px;
-      border-bottom: 2px solid var(--blue-light);
+      font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--blue-mid); margin-bottom:1.1rem; padding-bottom:6px;
+      border-bottom:2px solid var(--blue-light);
     }
 
-    /* ── CARD ── */
-    .card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.6rem 1.8rem;
-      margin-bottom: 1.25rem;
-      position: relative;
-    }
-    .card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 16px; bottom: 16px;
-      width: 4px;
-      background: var(--blue);
-      border-radius: 0 4px 4px 0;
-    }
-    .card.amber::before { background: var(--amber); }
-    .card.green::before  { background: var(--green);  }
-    .card.slate::before  { background: var(--slate-light); }
+    /* CARD */
+    .card { background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.6rem 1.8rem;margin-bottom:1.25rem;position:relative; }
+    .card::before { content:'';position:absolute;left:0;top:16px;bottom:16px;width:4px;background:var(--blue);border-radius:0 4px 4px 0; }
+    .card.amber::before { background:var(--amber); }
+    .card.green::before { background:var(--green); }
+    .card.slate::before { background:var(--slate-light); }
 
-    /* ── GRID ── */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
-    @media (max-width: 600px) {
-      .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    }
+    /* GRID */
+    .grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:1.1rem; }
+    .grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.1rem; }
+    @media(max-width:600px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
 
-    /* ── FORM ELEMENTS ── */
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--slate);
-      letter-spacing: 0.02em;
+    /* FORM */
+    .field { display:flex;flex-direction:column;gap:5px; }
+    label { font-size:.75rem;font-weight:600;color:var(--slate);letter-spacing:.02em; }
+    label .req { color:var(--red);margin-left:2px; }
+    input[type="text"],input[type="datetime-local"],select,textarea {
+      width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+      font-size:.875rem;font-family:'Inter',sans-serif;color:var(--slate);background:var(--white);
+      transition:border-color .15s,box-shadow .15s;
     }
-    label .req { color: var(--red); margin-left: 2px; }
-    input[type="text"],
-    input[type="number"],
-    input[type="datetime-local"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-family: 'Inter', sans-serif;
-      color: var(--slate);
-      background: var(--white);
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(44,95,138,0.12);
-    }
-    textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    input:focus,select:focus,textarea:focus { outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(44,95,138,.12); }
+    textarea { resize:vertical;min-height:80px;line-height:1.5; }
+    .currency-wrap { position:relative; }
+    .currency-wrap span { position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.875rem;color:var(--slate-light);font-weight:500; }
+    .currency-wrap input { padding-left:26px; }
 
-    /* Currency wrapper */
-    .currency-wrap { position: relative; }
-    .currency-wrap span {
-      position: absolute; left: 11px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.875rem; color: var(--slate-light); font-weight: 500;
-    }
-    .currency-wrap input { padding-left: 26px; }
+    /* UPLOAD */
+    .upload-zone { border:2px dashed var(--border);border-radius:8px;padding:1.2rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s; }
+    .upload-zone:hover { border-color:var(--blue);background:var(--blue-light); }
+    .upload-zone input { display:none; }
+    .upload-zone .up-icon { font-size:1.6rem;margin-bottom:6px; }
+    .upload-zone p { font-size:.8rem;color:var(--slate-light); }
+    .upload-zone strong { color:var(--blue); }
+    #file-list { margin-top:10px;display:flex;flex-wrap:wrap;gap:6px; }
+    .file-chip { background:var(--blue-light);color:var(--blue-dark);border-radius:20px;padding:3px 10px;font-size:.74rem;display:flex;align-items:center;gap:5px; }
+    .file-chip button { background:none;border:none;color:var(--blue);cursor:pointer;font-size:.85rem;line-height:1; }
 
-    /* ── MEDIA UPLOAD ── */
-    .upload-zone {
-      border: 2px dashed var(--border);
-      border-radius: 8px;
-      padding: 1.2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .upload-zone:hover { border-color: var(--blue); background: var(--blue-light); }
-    .upload-zone input { display: none; }
-    .upload-zone .up-icon { font-size: 1.6rem; margin-bottom: 6px; }
-    .upload-zone p { font-size: 0.8rem; color: var(--slate-light); }
-    .upload-zone strong { color: var(--blue); }
-    #file-list { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
-    .file-chip {
-      background: var(--blue-light);
-      color: var(--blue-dark);
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 0.74rem;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .file-chip button {
-      background: none; border: none; color: var(--blue);
-      cursor: pointer; font-size: 0.85rem; line-height: 1;
-    }
+    /* LOG STRIP */
+    .log-strip { background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:.78rem;color:var(--slate-light);min-height:38px; }
 
-    /* ── LOG STRIP ── */
-    .log-strip {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      color: var(--slate-light);
-      min-height: 38px;
-    }
+    /* BUTTONS */
+    .form-actions { display:flex;gap:12px;align-items:center;margin-top:.5rem; }
+    .btn-primary { padding:11px 28px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;display:flex;align-items:center;gap:8px; }
+    .btn-primary:hover { background:var(--blue-dark); }
+    .btn-primary:active { transform:scale(.98); }
+    .btn-primary:disabled { background:var(--border);cursor:not-allowed; }
+    .btn-secondary { padding:11px 20px;background:none;color:var(--slate);border:1px solid var(--border);border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;transition:background .15s; }
+    .btn-secondary:hover { background:var(--bg); }
+    .btn-danger { padding:11px 20px;background:none;color:var(--red);border:1px solid var(--red);border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer; }
 
-    /* ── ACTIONS ── */
-    .form-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-top: 0.5rem;
-    }
-    .btn-primary {
-      padding: 11px 28px;
-      background: var(--blue);
-      color: white;
-      border: none; border-radius: 8px;
-      font-size: 0.9rem; font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .btn-primary:hover  { background: var(--blue-dark); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { background: var(--border); cursor: not-allowed; }
-    .btn-secondary {
-      padding: 11px 20px;
-      background: none;
-      color: var(--slate);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.875rem; font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-secondary:hover { background: var(--bg); }
+    /* SPINNER */
+    .spinner { width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none; }
+    .spinner.active { display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* ── TOAST ── */
-    #toast {
-      position: fixed;
-      bottom: 2rem; right: 2rem;
-      padding: 13px 20px;
-      border-radius: 10px;
-      font-size: 0.875rem; font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
-      display: none;
-      z-index: 999;
-      align-items: center; gap: 10px;
-      max-width: 360px;
-    }
-    #toast.success { background: var(--green); color: white; display: flex; }
-    #toast.error   { background: var(--red);   color: white; display: flex; }
-    #toast.info    { background: var(--blue);  color: white; display: flex; }
+    /* HELP */
+    .help { font-size:.72rem;color:var(--slate-light);margin-top:2px; }
+    hr.divider { border:none;border-top:1px solid var(--border);margin:1.2rem 0; }
 
-    /* ── SPINNER ── */
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-    }
-    .spinner.active { display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* TOAST */
+    #toast { position:fixed;bottom:2rem;right:2rem;padding:13px 20px;border-radius:10px;font-size:.875rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.18);display:none;z-index:9999;align-items:center;gap:10px;max-width:360px; }
+    #toast.success { background:var(--green);color:white;display:flex; }
+    #toast.error   { background:var(--red);color:white;display:flex; }
 
-    /* ── HELP TEXT ── */
-    .help { font-size: 0.72rem; color: var(--slate-light); margin-top: 2px; }
+    /* ── CALENDAR ── */
+    .cal-wrap { background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem; }
+    .cal-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem; }
+    .cal-title { font-size:1rem;font-weight:600;color:var(--blue-dark); }
+    .cal-nav { background:none;border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:.875rem;color:var(--slate); }
+    .cal-nav:hover { background:var(--bg); }
+    .cal-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:4px; }
+    .cal-dow { text-align:center;font-size:.68rem;font-weight:700;letter-spacing:.08em;color:var(--slate-light);text-transform:uppercase;padding-bottom:6px; }
+    .cal-day {
+      aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:8px;cursor:default;font-size:.82rem;color:var(--slate);position:relative;
+      transition:background .12s;
+    }
+    .cal-day.other-month { color:var(--border); }
+    .cal-day.today { background:var(--blue-light);font-weight:700;color:var(--blue); }
+    .cal-day.has-issues { cursor:pointer; }
+    .cal-day.has-issues:hover { background:var(--blue-light); }
+    .cal-day.selected { background:var(--blue) !important;color:white !important; }
+    .dots { display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:center;max-width:32px; }
+    .dot { width:5px;height:5px;border-radius:50%;background:var(--amber);flex-shrink:0; }
+    .cal-day.selected .dot { background:white; }
 
-    /* ── INSTRUCTIONS MODAL ── */
-    .modal-bg {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.55);
-      z-index: 200;
-      align-items: center; justify-content: center;
+    /* ISSUES LIST (below calendar) */
+    .issues-list { margin-top:1rem; }
+    .issue-card {
+      background:var(--white);border:1px solid var(--border);border-radius:10px;
+      padding:1rem 1.2rem;margin-bottom:.75rem;cursor:pointer;
+      transition:border-color .15s,box-shadow .15s;display:flex;gap:1rem;align-items:flex-start;
     }
-    .modal-bg.open { display: flex; }
-    .modal {
-      background: white;
-      border-radius: 14px;
-      padding: 2rem;
-      max-width: 680px; width: 92%;
-      max-height: 85vh; overflow-y: auto;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
-    }
-    .modal h2 { font-size: 1.15rem; color: var(--blue-dark); margin-bottom: 0.8rem; }
-    .modal h3 { font-size: 0.85rem; font-weight: 600; color: var(--blue); margin: 1.2rem 0 0.4rem; }
-    .modal p, .modal li { font-size: 0.83rem; line-height: 1.65; color: var(--slate); }
-    .modal ol, .modal ul { padding-left: 1.2rem; }
-    .modal li { margin-bottom: 0.35rem; }
-    .modal code {
-      background: var(--bg); padding: 0 4px; border-radius: 4px;
-      font-family: var(--mono); font-size: 0.8rem; color: var(--blue-dark);
-    }
-    .modal pre {
-      background: var(--blue-dark); color: #A8D4F5;
-      padding: 1rem; border-radius: 8px;
-      font-size: 0.73rem; overflow-x: auto;
-      margin: 0.6rem 0; line-height: 1.6;
-      white-space: pre-wrap; word-break: break-all;
-    }
-    .modal-close {
-      float: right; background: none; border: none;
-      font-size: 1.4rem; cursor: pointer; color: var(--slate-light);
-    }
-    .modal-close:hover { color: var(--slate); }
+    .issue-card:hover { border-color:var(--blue);box-shadow:0 2px 12px rgba(44,95,138,.1); }
+    .issue-card-badge { background:var(--blue-light);color:var(--blue-dark);border-radius:6px;padding:4px 8px;font-size:.7rem;font-weight:600;white-space:nowrap;flex-shrink:0; }
+    .issue-card-body { flex:1;min-width:0; }
+    .issue-card-name { font-size:.82rem;font-weight:600;color:var(--blue-dark); }
+    .issue-card-issue { font-size:.8rem;color:var(--slate);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .issue-card-meta { font-size:.72rem;color:var(--slate-light);margin-top:4px; }
+    .issue-card-arrow { color:var(--border);font-size:1.1rem;flex-shrink:0;align-self:center; }
+    .issues-empty { text-align:center;padding:2rem;color:var(--slate-light);font-size:.875rem; }
+    .cal-loading { text-align:center;padding:1rem;color:var(--slate-light);font-size:.82rem; }
 
-    .note-box {
-      background: var(--amber-light);
-      border-left: 3px solid var(--amber);
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 0.78rem;
-      color: var(--slate);
-      margin: 0.6rem 0;
-    }
+    /* ── EDIT MODAL ── */
+    .modal-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto; }
+    .modal-bg.open { display:flex; }
+    .modal { background:white;border-radius:14px;padding:2rem;width:100%;max-width:720px;box-shadow:0 8px 40px rgba(0,0,0,.2);margin:auto; }
+    .modal-hdr { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem; }
+    .modal-hdr h2 { font-size:1.05rem;font-weight:600;color:var(--blue-dark); }
+    .modal-close { background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--slate-light);line-height:1; }
+    .modal-close:hover { color:var(--slate); }
+    .modal-actions { display:flex;gap:10px;margin-top:1.4rem;justify-content:flex-end; }
+    .edit-field { display:flex;flex-direction:column;gap:5px;margin-bottom:1rem; }
+    .edit-field label { font-size:.75rem;font-weight:600;color:var(--slate); }
 
-    hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+    /* SETUP MODAL */
+    .setup-modal-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center; }
+    .setup-modal-bg.open { display:flex; }
+    .setup-modal { background:white;border-radius:14px;padding:2rem;max-width:680px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2); }
+    .setup-modal h2 { font-size:1.15rem;color:var(--blue-dark);margin-bottom:.8rem; }
+    .setup-modal h3 { font-size:.85rem;font-weight:600;color:var(--blue);margin:1.2rem 0 .4rem; }
+    .setup-modal p,.setup-modal li { font-size:.83rem;line-height:1.65;color:var(--slate); }
+    .setup-modal ol,.setup-modal ul { padding-left:1.2rem; }
+    .setup-modal li { margin-bottom:.35rem; }
+    .setup-modal code { background:var(--bg);padding:0 4px;border-radius:4px;font-family:var(--mono);font-size:.8rem;color:var(--blue-dark); }
+    .setup-modal pre { background:var(--blue-dark);color:#A8D4F5;padding:1rem;border-radius:8px;font-size:.73rem;overflow-x:auto;margin:.6rem 0;line-height:1.6;white-space:pre-wrap;word-break:break-all; }
+    .note-box { background:var(--amber-light);border-left:3px solid var(--amber);border-radius:6px;padding:8px 12px;font-size:.78rem;color:var(--slate);margin:.6rem 0; }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-left">
     <div class="header-icon">🏢</div>
@@ -329,154 +206,264 @@
   </div>
   <div class="header-right">
     <span id="live-clock"></span>
-    <button class="btn-xs" onclick="document.getElementById('modal-bg').classList.add('open')">Setup Guide</button>
+    <button class="btn-xs" onclick="document.getElementById('setup-modal-bg').classList.add('open')">Setup Guide</button>
   </div>
 </header>
 
-<!-- MAIN FORM -->
+<!-- TABS -->
+<div style="background:var(--white);border-bottom:1px solid var(--border);">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('log')">📋 Log New Issue</button>
+    <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar &amp; Issues</button>
+  </div>
+</div>
+
 <main>
-  <form id="issue-form" novalidate>
 
-    <!-- SECTION 1: Identification -->
-    <div class="section-label">Issue Identification</div>
-    <div class="card">
-      <div class="grid-3">
-        <div class="field">
-          <label for="f-date">Date / Time <span class="req">*</span></label>
-          <input type="datetime-local" id="f-date" name="DateTime" required />
-        </div>
-        <div class="field">
-          <label for="f-name">Resident Name <span class="req">*</span></label>
-          <input type="text" id="f-name" name="ResidentName" placeholder="e.g. Jane Smith" required />
-        </div>
-        <div class="field">
-          <label for="f-medium">How Logged <span class="req">*</span></label>
-          <select id="f-medium" name="HowLogged" required>
-            <option value="" disabled selected>Select medium…</option>
-            <option>In Person</option>
-            <option>Phone</option>
-            <option>Email</option>
-            <option>Other</option>
-          </select>
-        </div>
-      </div>
-    </div>
+  <!-- ══ TAB: LOG NEW ISSUE ══ -->
+  <div class="tab-panel active" id="tab-log">
+    <form id="issue-form" novalidate>
 
-    <!-- SECTION 2: Issue & Action -->
-    <div class="section-label">Issue Detail &amp; Response</div>
-    <div class="card amber">
-      <div class="field" style="margin-bottom:1rem">
-        <label for="f-issue">Issue / Feedback <span class="req">*</span></label>
-        <textarea id="f-issue" name="Issue" rows="4" placeholder="Describe the building issue or resident feedback in detail…" required></textarea>
-      </div>
-      <div class="field" style="margin-bottom:1rem">
-        <label for="f-action">Action Taken</label>
-        <textarea id="f-action" name="ActionTaken" rows="3" placeholder="Describe any steps taken or planned to rectify the issue…"></textarea>
-      </div>
-      <div class="field">
-        <label for="f-response">Response to Resident</label>
-        <textarea id="f-response" name="ResidentResponse" rows="3" placeholder="Date/Time of response, medium used (call/email/in person), who responded, and what was communicated…"></textarea>
-      </div>
-    </div>
-
-    <!-- SECTION 3: Cost & Media -->
-    <div class="section-label">Cost &amp; Supporting Media</div>
-    <div class="card green">
-      <div class="grid-2" style="align-items:start">
-
-        <div class="field">
-          <label for="f-cost">Cost (AUD)</label>
-          <div class="currency-wrap">
-            <span>$</span>
-            <input type="text" id="f-cost" name="Cost" placeholder="0.00" inputmode="decimal" />
+      <div class="section-label">Issue Identification</div>
+      <div class="card">
+        <div class="grid-3">
+          <div class="field">
+            <label for="f-date">Date / Time <span class="req">*</span></label>
+            <input type="datetime-local" id="f-date" required />
           </div>
-          <p class="help">Enter amount — will be saved in currency format</p>
-        </div>
-
-        <div class="field">
-          <label>Media / Attachments</label>
-          <div class="upload-zone" onclick="document.getElementById('f-media').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-            <input type="file" id="f-media" multiple accept="image/*,.pdf,.doc,.docx" onchange="handleFiles(this.files)" />
-            <div class="up-icon">📎</div>
-            <p><strong>Click to upload</strong> or drag &amp; drop</p>
-            <p>Images, PDFs, Word docs</p>
+          <div class="field">
+            <label for="f-name">Resident Name <span class="req">*</span></label>
+            <input type="text" id="f-name" placeholder="e.g. Jane Smith" required />
           </div>
-          <div id="file-list"></div>
-          <p class="help">Files are saved to your Google Drive folder automatically</p>
+          <div class="field">
+            <label for="f-medium">How Logged <span class="req">*</span></label>
+            <select id="f-medium" required>
+              <option value="" disabled selected>Select medium…</option>
+              <option>In Person</option><option>Phone</option><option>Email</option><option>Other</option>
+            </select>
+          </div>
         </div>
-
       </div>
-    </div>
 
-    <!-- SECTION 4: Additional Notes -->
-    <div class="section-label">Additional Notes</div>
-    <div class="card slate">
-      <div class="field">
-        <label for="f-other">Other Comments</label>
-        <textarea id="f-other" name="OtherComments" rows="3" placeholder="Any other relevant information, follow-up required, escalation notes…"></textarea>
-      </div>
-    </div>
-
-    <!-- SECTION 5: Log -->
-    <div class="section-label">Log Entry</div>
-    <div class="card" style="padding-bottom:1rem">
-      <div class="grid-2">
-        <div class="field">
-          <label for="f-user">Your Name / Role <span class="req">*</span></label>
-          <input type="text" id="f-user" name="LoggedBy" placeholder="e.g. Building Manager" required />
+      <div class="section-label">Issue Detail &amp; Response</div>
+      <div class="card amber">
+        <div class="field" style="margin-bottom:1rem">
+          <label for="f-issue">Issue / Feedback <span class="req">*</span></label>
+          <textarea id="f-issue" rows="4" placeholder="Describe the building issue or resident feedback in detail…" required></textarea>
+        </div>
+        <div class="field" style="margin-bottom:1rem">
+          <label for="f-action">Action Taken</label>
+          <textarea id="f-action" rows="3" placeholder="Describe any steps taken or planned to rectify the issue…"></textarea>
         </div>
         <div class="field">
-          <label>Last Updated (auto-stamped)</label>
-          <div class="log-strip" id="log-preview">Will be set when form is submitted</div>
+          <label for="f-response">Response to Resident</label>
+          <textarea id="f-response" rows="3" placeholder="Date/Time of response, medium used, who responded, and what was communicated…"></textarea>
         </div>
       </div>
+
+      <div class="section-label">Cost &amp; Supporting Media</div>
+      <div class="card green">
+        <div class="grid-2" style="align-items:start">
+          <div class="field">
+            <label for="f-cost">Cost (AUD)</label>
+            <div class="currency-wrap">
+              <span>$</span>
+              <input type="text" id="f-cost" placeholder="0.00" inputmode="decimal" />
+            </div>
+            <p class="help">Enter amount — will be saved in currency format</p>
+          </div>
+          <div class="field">
+            <label>Media / Attachments</label>
+            <div class="upload-zone" onclick="document.getElementById('f-media').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+              <input type="file" id="f-media" multiple accept="image/*,.pdf,.doc,.docx" onchange="handleFiles(this.files)" />
+              <div class="up-icon">📎</div>
+              <p><strong>Click to upload</strong> or drag &amp; drop</p>
+              <p>Images, PDFs, Word docs</p>
+            </div>
+            <div id="file-list"></div>
+            <p class="help">Files are saved to your Google Drive folder automatically</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Additional Notes</div>
+      <div class="card slate">
+        <div class="field">
+          <label for="f-other">Other Comments</label>
+          <textarea id="f-other" rows="3" placeholder="Any other relevant information, follow-up required, escalation notes…"></textarea>
+        </div>
+      </div>
+
+      <div class="section-label">Log Entry</div>
+      <div class="card" style="padding-bottom:1rem">
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-user">Your Name / Role <span class="req">*</span></label>
+            <input type="text" id="f-user" placeholder="e.g. Building Manager" required />
+          </div>
+          <div class="field">
+            <label>Last Updated (auto-stamped)</label>
+            <div class="log-strip" id="log-preview">Will be set when form is submitted</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="submit-btn">
+          <span>📋</span>
+          <span id="submit-text">Log Issue to Google Sheet</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
+        <button type="button" class="btn-secondary" onclick="resetForm()">Clear Form</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ══ TAB: CALENDAR & ISSUES ══ -->
+  <div class="tab-panel" id="tab-calendar">
+
+    <!-- Calendar -->
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calPrev()">◀ Prev</button>
+        <span class="cal-title" id="cal-title"></span>
+        <button class="cal-nav" onclick="calNext()">Next ▶</button>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div>
+        <div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+      </div>
+      <div id="cal-loading" class="cal-loading">Loading issue dates…</div>
     </div>
 
-    <hr class="divider" />
-
-    <!-- ACTIONS -->
-    <div class="form-actions">
-      <button type="submit" class="btn-primary" id="submit-btn">
-        <span id="submit-icon">📋</span>
-        <span id="submit-text">Log Issue to Google Sheet</span>
-        <div class="spinner" id="spinner"></div>
-      </button>
-      <button type="button" class="btn-secondary" onclick="resetForm()">Clear Form</button>
+    <!-- Issues list -->
+    <div id="issues-section" style="display:none">
+      <div class="section-label" id="issues-section-title">Issues</div>
+      <div class="issues-list" id="issues-list"></div>
+    </div>
+    <div id="all-issues-section">
+      <div class="section-label">All Logged Issues</div>
+      <div class="issues-list" id="all-issues-list"><div class="issues-empty">Loading…</div></div>
     </div>
 
-  </form>
+  </div>
 </main>
 
 <!-- TOAST -->
 <div id="toast"></div>
 
-<!-- SETUP INSTRUCTIONS MODAL -->
-<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)this.classList.remove('open')">
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="edit-modal-bg" onclick="if(event.target===this)closeEditModal()">
   <div class="modal">
-    <button class="modal-close" onclick="document.getElementById('modal-bg').classList.remove('open')">×</button>
+    <div class="modal-hdr">
+      <h2 id="edit-modal-title">Edit Issue</h2>
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+    </div>
+    <input type="hidden" id="edit-row" />
+
+    <div class="grid-3" style="gap:1rem;margin-bottom:1rem">
+      <div class="edit-field">
+        <label>Date / Time</label>
+        <input type="datetime-local" id="edit-date" />
+      </div>
+      <div class="edit-field">
+        <label>Resident Name</label>
+        <input type="text" id="edit-name" />
+      </div>
+      <div class="edit-field">
+        <label>How Logged</label>
+        <select id="edit-medium">
+          <option>In Person</option><option>Phone</option><option>Email</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="edit-field">
+      <label>Issue / Feedback</label>
+      <textarea id="edit-issue" rows="3"></textarea>
+    </div>
+    <div class="edit-field">
+      <label>Action Taken</label>
+      <textarea id="edit-action" rows="3"></textarea>
+    </div>
+    <div class="edit-field">
+      <label>Response to Resident</label>
+      <textarea id="edit-response" rows="3"></textarea>
+    </div>
+
+    <div class="grid-2" style="gap:1rem">
+      <div class="edit-field">
+        <label>Cost (AUD)</label>
+        <div class="currency-wrap">
+          <span>$</span>
+          <input type="text" id="edit-cost" placeholder="0.00" inputmode="decimal" style="padding-left:26px" />
+        </div>
+      </div>
+      <div class="edit-field">
+        <label>Media (Drive links, comma-separated)</label>
+        <input type="text" id="edit-media" placeholder="https://drive.google.com/…" />
+      </div>
+    </div>
+
+    <div class="edit-field">
+      <label>Other Comments</label>
+      <textarea id="edit-other" rows="2"></textarea>
+    </div>
+
+    <div class="edit-field">
+      <label>Your Name / Role (for update log) <span class="req">*</span></label>
+      <input type="text" id="edit-user" placeholder="e.g. Building Manager" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" id="edit-save-btn" onclick="saveEdit()">
+        <span id="edit-save-text">Save Changes</span>
+        <div class="spinner" id="edit-spinner"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP MODAL -->
+<div class="setup-modal-bg" id="setup-modal-bg" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="setup-modal">
+    <button class="modal-close" style="float:right" onclick="document.getElementById('setup-modal-bg').classList.remove('open')">×</button>
     <h2>🔧 Google Setup Guide</h2>
-    <p>One-time setup to connect this page to your Google Sheet and Drive folder. Takes about 10 minutes.</p>
+    <p>One-time setup to connect this page to your Google Sheet, Drive folder, and enable editing. Takes about 10 minutes.</p>
 
     <h3>Step 1 — Create a Google Drive folder for media</h3>
     <ol>
-      <li>Open <strong>Google Drive</strong> and click <strong>New → Folder</strong></li>
-      <li>Name it something like <code>Cove Building Issues – Media</code></li>
-      <li>Open the folder — copy the folder ID from the URL:<br/>
-        <code>drive.google.com/drive/folders/<strong>THIS_PART_IS_THE_ID</strong></code></li>
-      <li>Keep this ID handy — you'll paste it into the Apps Script below</li>
+      <li>Open <strong>Google Drive</strong> → <strong>New → Folder</strong></li>
+      <li>Name it e.g. <code>Cove Building Issues – Media</code></li>
+      <li>Open the folder and copy the ID from the URL:<br/><code>drive.google.com/drive/folders/<strong>FOLDER_ID_HERE</strong></code></li>
     </ol>
 
-    <h3>Step 2 — Open Apps Script from your Google Sheet</h3>
-    <ol>
-      <li>Open your <strong>Cove Resident Feedback</strong> sheet</li>
-      <li>Go to <strong>Extensions → Apps Script</strong></li>
-      <li>Delete all existing code and paste the script below</li>
-      <li>Replace <code>YOUR_DRIVE_FOLDER_ID</code> with the folder ID from Step 1<br/>
-          (the Sheet ID is already filled in — your sheet is hardcoded)</li>
-    </ol>
-
+    <h3>Step 2 — Replace the Apps Script with the updated version</h3>
+    <p>Go to your Sheet → <strong>Extensions → Apps Script</strong>, delete everything, and paste this. Replace <code>YOUR_DRIVE_FOLDER_ID</code> with your folder ID from Step 1.</p>
     <pre>const SHEET_ID  = "1OYjgiJQxFW67iJZDkypSIR9lrZTlk0h3s9N1Tc5w508";
 const FOLDER_ID = "YOUR_DRIVE_FOLDER_ID";
+const TZ        = "Australia/Sydney";
+
+function sydneyTimestamp() {
+  return Utilities.formatDate(new Date(), TZ, "dd/MM/yyyy HH:mm:ss");
+}
+
+function doGet(e) {
+  var ss    = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheets()[0];
+  var rows  = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var data = rows.slice(1).map(function(row, i) {
+    var obj = {rowIndex: i + 2};
+    headers.forEach(function(h, j){ obj[h] = row[j]; });
+    return obj;
+  });
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
 function doPost(e) {
   var data   = JSON.parse(e.postData.contents);
@@ -484,259 +471,455 @@ function doPost(e) {
   var sheet  = ss.getSheets()[0];
   var folder = DriveApp.getFolderById(FOLDER_ID);
 
-  // Upload any attached files to Drive
+  // Upload files to Drive
   var mediaLinks = [];
   if (data.files && data.files.length > 0) {
     data.files.forEach(function(f) {
       var bytes = Utilities.base64Decode(f.data);
       var blob  = Utilities.newBlob(bytes, f.mimeType, f.name);
       var file  = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,
-                      DriveApp.Permission.VIEW);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       mediaLinks.push(file.getUrl());
     });
   }
 
-  sheet.appendRow([
-    data["Date/Time"],
-    data["Resident Name"],
-    data["How Logged"],
-    data["Issue"],
-    data["Action Taken"],
-    data["Response to Resident"],
-    data["Cost"],
-    mediaLinks.join(", "),
-    data["Other Comments"],
-    data["Last Updated"],
-    data["Logged By"]
-  ]);
+  if (data.action === "update" && data.rowIndex) {
+    // UPDATE existing row
+    var row = parseInt(data.rowIndex);
+    var headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
+    var existingMedia = sheet.getRange(row, headers.indexOf("Media")+1).getValue();
+    var allMedia = [existingMedia, mediaLinks.join(", ")].filter(Boolean).join(", ");
+    sheet.getRange(row, 1, 1, 11).setValues([[
+      data["Date/Time"], data["Resident Name"], data["How Logged"],
+      data["Issue"], data["Action Taken"], data["Response to Resident"],
+      data["Cost"], allMedia,
+      data["Other Comments"], data["Last Updated"], data["Logged By"]
+    ]]);
+  } else {
+    // NEW row
+    sheet.appendRow([
+      data["Date/Time"], data["Resident Name"], data["How Logged"],
+      data["Issue"], data["Action Taken"], data["Response to Resident"],
+      data["Cost"], mediaLinks.join(", "),
+      data["Other Comments"], data["Last Updated"] || sydneyTimestamp(), data["Logged By"]
+    ]);
+  }
 
   return ContentService
     .createTextOutput(JSON.stringify({result:"success"}))
     .setMimeType(ContentService.MimeType.JSON);
 }
+</pre>
 
-function doGet() {
-  return ContentService
-    .createTextOutput(JSON.stringify({status:"ok"}))
-    .setMimeType(ContentService.MimeType.JSON);
-}</pre>
-
-    <h3>Step 3 — Deploy as a Web App</h3>
+    <h3>Step 3 — Deploy / Re-deploy as a Web App</h3>
     <ol>
-      <li>Click <strong>Save</strong> (floppy disk icon or Ctrl+S)</li>
-      <li>Click <strong>Deploy → New deployment</strong></li>
-      <li>Click the ⚙️ gear icon and select <strong>Web app</strong></li>
-      <li>Set <strong>Execute as: Me</strong></li>
-      <li>Set <strong>Who has access: Anyone</strong> (not "with Google account")</li>
-      <li>Click <strong>Deploy</strong></li>
-      <li>Click <strong>Authorize access</strong> → if warned, click <em>Advanced → Go to (project name)</em> — this is normal for personal scripts</li>
-      <li>Copy the <strong>Web App URL</strong> — it ends in <code>/exec</code></li>
+      <li>Save the script, then click <strong>Deploy → New deployment</strong></li>
+      <li>Type: <strong>Web app</strong> · Execute as: <strong>Me</strong> · Access: <strong>Anyone</strong></li>
+      <li>Click <strong>Deploy</strong> and authorize — copy the new <code>/exec</code> URL</li>
+      <li>The URL is already hardcoded in this page — if it changed, update <code>SCRIPT_URL</code> in the HTML</li>
     </ol>
 
-    <h3>Step 4 — Paste the Web App URL into this page</h3>
-    <p>Open <code>index.html</code> in a text editor, find this line near the bottom:</p>
-    <pre>const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyu2JM_H4RdgPVir7GtE2qr6SrU8MbKmA36D8Gj-axUX8iwgynfs0VcXI8R0tmZUk-xiQ/exec";</pre>
-    <p>Replace <code>PASTE_YOUR_WEB_APP_URL_HERE</code> with the URL you just copied, save the file, and re-upload it to GitHub.</p>
+    <div class="note-box">⚠️ The <strong>doGet</strong> function (which powers the calendar and issue list) requires the same Web App URL. Make sure you re-deploy after replacing the script — the calendar won't load on the old deployment.</div>
 
-    <div class="note-box">
-      ⚠️ <strong>Re-deploying:</strong> If you ever edit the Apps Script, you must create a <em>New deployment</em> each time (not update the existing one) to get an updated URL. Old deployments keep working but won't reflect script changes.
-    </div>
-
-    <h3>Step 5 — Host on GitHub Pages</h3>
+    <h3>Step 4 — Host on GitHub Pages</h3>
     <ol>
-      <li>Create a GitHub repo and upload <code>index.html</code></li>
-      <li>Go to <strong>Settings → Pages</strong>, set source to <code>main</code> branch</li>
-      <li>Your page will be live at <code>https://yourusername.github.io/reponame</code></li>
+      <li>Upload <code>index.html</code> to your GitHub repo</li>
+      <li><strong>Settings → Pages</strong> → source: <code>main</code> branch</li>
     </ol>
-
-    <h3>How media uploads work</h3>
-    <p>When you attach a file and submit the form, the file is sent to the Apps Script, saved into your Drive folder, made view-only shareable, and its Drive link is written into the <strong>Media</strong> column of your sheet — so you can click straight through from the sheet to the file.</p>
   </div>
 </div>
 
 <script>
-  // ── HARDCODED SCRIPT URL — replace with your deployed Apps Script Web App URL ──
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyu2JM_H4RdgPVir7GtE2qr6SrU8MbKmA36D8Gj-axUX8iwgynfs0VcXI8R0tmZUk-xiQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyu2JM_H4RdgPVir7GtE2qr6SrU8MbKmA36D8Gj-axUX8iwgynfs0VcXI8R0tmZUk-xiQ/exec";
+const TZ = "Australia/Sydney";
 
-  // ── CLOCK ──
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('live-clock').textContent =
-      now.toLocaleDateString('en-AU') + '  ' +
-      now.toLocaleTimeString('en-AU', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
+// ── SYDNEY TIME HELPERS ──
+function sydneyNow() {
+  // Returns a Date object representing current moment (same instant, JS Date is always UTC internally)
+  return new Date();
+}
+function sydneyStr(date) {
+  // Full date+time string in Sydney locale
+  return (date || new Date()).toLocaleString('en-AU', { timeZone: TZ, hour12: false,
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+function sydneyDateStr(date) {
+  // Short date only
+  return (date || new Date()).toLocaleDateString('en-AU', { timeZone: TZ,
+    day:'numeric', month:'short', year:'numeric' });
+}
+function sydneyTimeStr(date) {
+  return (date || new Date()).toLocaleTimeString('en-AU', { timeZone: TZ,
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false });
+}
+function sydneyDateLocal(date) {
+  // Returns YYYY-MM-DDTHH:MM string in Sydney time for datetime-local inputs
+  const d = date || new Date();
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', hour12: false
+  }).formatToParts(d);
+  const p = {};
+  parts.forEach(x => p[x.type] = x.value);
+  // handle midnight shown as 24:mm
+  const hr = p.hour === '24' ? '00' : p.hour;
+  return `${p.year}-${p.month}-${p.day}T${hr}:${p.minute}`;
+}
+function sydneyDateOnly(date) {
+  // YYYY-MM-DD in Sydney time (for calendar dot matching)
+  const d = date || new Date();
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit'
+  }).formatToParts(d);
+  const p = {};
+  parts.forEach(x => p[x.type] = x.value);
+  return `${p.year}-${p.month}-${p.day}`;
+}
 
-  // ── LOG PREVIEW ──
-  function updateLogPreview() {
-    const user = document.getElementById('f-user').value.trim();
-    const now  = new Date().toLocaleString('en-AU');
-    const who  = user || '(your name)';
-    document.getElementById('log-preview').textContent =
-      `${now} — Updated by: ${who}`;
-  }
-  document.getElementById('f-user').addEventListener('input', updateLogPreview);
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    now.toLocaleDateString('en-AU', { timeZone: TZ }) + '  ' + sydneyTimeStr(now);
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ── LOG PREVIEW ──
+function updateLogPreview() {
+  const user = document.getElementById('f-user').value.trim() || '(your name)';
+  document.getElementById('log-preview').textContent =
+    `${sydneyStr()} — Updated by: ${user}`;
+}
+document.getElementById('f-user').addEventListener('input', updateLogPreview);
+updateLogPreview(); setInterval(updateLogPreview, 30000);
+
+// ── DEFAULT DATE ──
+(function(){
+  document.getElementById('f-date').value = sydneyDateLocal();
+})();
+
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['log','calendar'][i]===tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab === 'calendar') loadIssues();
+}
+
+// ── FILE HANDLING ──
+let uploadedFiles = [];
+function handleFiles(files) {
+  for (const f of files) if (!uploadedFiles.find(x=>x.name===f.name)) uploadedFiles.push(f);
+  renderFileList();
+}
+function handleDrop(ev) { ev.preventDefault(); handleFiles(ev.dataTransfer.files); }
+function removeFile(name) { uploadedFiles = uploadedFiles.filter(f=>f.name!==name); renderFileList(); }
+function renderFileList() {
+  document.getElementById('file-list').innerHTML = uploadedFiles.map(f=>
+    `<div class="file-chip">📄 ${f.name}<button onclick="removeFile(${JSON.stringify(f.name)})" title="Remove">×</button></div>`
+  ).join('');
+}
+function readFileAsBase64(file) {
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+// ── COST FORMAT ──
+document.getElementById('f-cost').addEventListener('blur', function(){
+  const v = parseFloat(this.value.replace(/[^0-9.]/g,''));
+  if (!isNaN(v)) this.value = v.toFixed(2);
+});
+document.getElementById('edit-cost').addEventListener('blur', function(){
+  const v = parseFloat(this.value.replace(/[^0-9.]/g,''));
+  if (!isNaN(v)) this.value = v.toFixed(2);
+});
+
+// ── SUBMIT NEW ──
+document.getElementById('issue-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const req = ['f-date','f-name','f-medium','f-issue','f-user'];
+  let valid = true;
+  req.forEach(id=>{ const el=document.getElementById(id); if(!el.value.trim()){el.style.borderColor='#C0392B';valid=false;}else el.style.borderColor=''; });
+  if (!valid) { showToast('Please fill in all required fields','error'); return; }
+
+  let cost = document.getElementById('f-cost').value.trim();
+  if (cost && !isNaN(parseFloat(cost))) cost = '$'+parseFloat(cost).toFixed(2);
+
+  const btn=document.getElementById('submit-btn'), sp=document.getElementById('spinner');
+  btn.disabled=true; document.getElementById('submit-text').textContent=uploadedFiles.length?'Uploading files…':'Logging…'; sp.classList.add('active');
+
+  let filesPayload=[];
+  try { filesPayload = await Promise.all(uploadedFiles.map(async f=>({name:f.name,mimeType:f.type||'application/octet-stream',data:await readFileAsBase64(f)}))); }
+  catch(err) { showToast('Error reading files','error'); btn.disabled=false; document.getElementById('submit-text').textContent='Log Issue to Google Sheet'; sp.classList.remove('active'); return; }
+
+  document.getElementById('submit-text').textContent='Saving to Sheet…';
+  const payload = {
+    "Date/Time": document.getElementById('f-date').value,
+    "Resident Name": document.getElementById('f-name').value.trim(),
+    "How Logged": document.getElementById('f-medium').value,
+    "Issue": document.getElementById('f-issue').value.trim(),
+    "Action Taken": document.getElementById('f-action').value.trim(),
+    "Response to Resident": document.getElementById('f-response').value.trim(),
+    "Cost": cost,
+    "Other Comments": document.getElementById('f-other').value.trim(),
+    "Last Updated": sydneyStr(),
+    "Logged By": document.getElementById('f-user').value.trim(),
+    "files": filesPayload
+  };
+  try {
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    showToast('✓ Issue logged!'+(filesPayload.length?' Files saved to Drive.':''),'success');
+    resetForm(); allIssues=null;
+  } catch(err) { showToast('Error connecting to Google','error'); }
+  finally { btn.disabled=false; document.getElementById('submit-text').textContent='Log Issue to Google Sheet'; sp.classList.remove('active'); }
+});
+
+function resetForm() {
+  document.getElementById('issue-form').reset();
+  uploadedFiles=[]; renderFileList();
+  document.getElementById('f-date').value = sydneyDateLocal();
   updateLogPreview();
-  setInterval(updateLogPreview, 30000);
+  ['f-date','f-name','f-medium','f-issue','f-user'].forEach(id=>document.getElementById(id).style.borderColor='');
+}
 
-  // ── DEFAULT DATE ──
-  (function() {
-    const now = new Date();
-    const local = new Date(now - now.getTimezoneOffset() * 60000)
-      .toISOString().slice(0,16);
-    document.getElementById('f-date').value = local;
-  })();
+// ══════════════════════════════
+// CALENDAR & ISSUES
+// ══════════════════════════════
+let allIssues = null;
+let calYear, calMonth, selectedDateStr = null;
 
-  // ── FILE HANDLING ──
-  let uploadedFiles = [];
-  function handleFiles(files) {
-    for (const f of files) {
-      if (!uploadedFiles.find(x => x.name === f.name)) uploadedFiles.push(f);
-    }
-    renderFileList();
-  }
-  function handleDrop(ev) {
-    ev.preventDefault();
-    handleFiles(ev.dataTransfer.files);
-  }
-  function removeFile(name) {
-    uploadedFiles = uploadedFiles.filter(f => f.name !== name);
-    renderFileList();
-  }
-  function renderFileList() {
-    const el = document.getElementById('file-list');
-    el.innerHTML = uploadedFiles.map(f =>
-      `<div class="file-chip">📄 ${f.name}
-        <button onclick="removeFile('${f.name.replace(/'/g,"\\'")}'')" title="Remove">×</button>
-      </div>`
-    ).join('');
-  }
+function toDateStr(val) {
+  // Parse date string from sheet and return YYYY-MM-DD in Sydney time
+  if (!val) return null;
+  const s = String(val).trim();
+  // Already YYYY-MM-DD
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  // DD/MM/YYYY HH:MM:SS or DD/MM/YYYY
+  const au = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (au) return `${au[3]}-${au[2].padStart(2,'0')}-${au[1].padStart(2,'0')}`;
+  // Parse as Date and convert to Sydney date
+  const d = new Date(s);
+  if (!isNaN(d)) return sydneyDateOnly(d);
+  return null;
+}
 
-  // ── Read file as base64 ──
-  function readFileAsBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload  = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+async function loadIssues() {
+  if (allIssues !== null) { renderCalendar(); renderAllIssues(); return; }
+  document.getElementById('cal-loading').style.display='block';
+  try {
+    const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
+    const data = await res.json();
+    allIssues = Array.isArray(data) ? data : [];
+  } catch(e) {
+    allIssues = [];
+    document.getElementById('cal-loading').textContent = 'Could not load issues — check your Apps Script deployment.';
   }
+  document.getElementById('cal-loading').style.display='none';
+  renderCalendar();
+  renderAllIssues();
+}
 
-  // ── COST FORMAT ──
-  document.getElementById('f-cost').addEventListener('blur', function() {
-    const v = parseFloat(this.value.replace(/[^0-9.]/g,''));
-    if (!isNaN(v)) this.value = v.toFixed(2);
+function initCalendar() {
+  // Use Sydney date for initial month
+  const parts = new Intl.DateTimeFormat('en-AU', {timeZone:TZ,year:'numeric',month:'2-digit'}).formatToParts(new Date());
+  const p = {}; parts.forEach(x=>p[x.type]=x.value);
+  calYear = parseInt(p.year); calMonth = parseInt(p.month)-1;
+}
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent = `${months[calMonth]} ${calYear}`;
+
+  // Count issues per date
+  const counts = {};
+  (allIssues||[]).forEach(issue => {
+    const ds = toDateStr(issue['Date/Time']);
+    if (ds) counts[ds] = (counts[ds]||0) + 1;
   });
 
-  // ── SUBMIT ──
-  document.getElementById('issue-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+  const grid = document.getElementById('cal-grid');
+  // Remove day cells (keep DOW headers = first 7 children)
+  while (grid.children.length > 7) grid.removeChild(grid.lastChild);
 
-    if (!SCRIPT_URL || SCRIPT_URL === 'PASTE_YOUR_WEB_APP_URL_HERE') {
-      showToast('Apps Script URL not set — see Setup Guide', 'error');
-      return;
-    }
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const today = sydneyDateOnly();
 
-    // Validate required fields
-    const required = ['f-date','f-name','f-medium','f-issue','f-user'];
-    let valid = true;
-    required.forEach(id => {
-      const el = document.getElementById(id);
-      if (!el.value.trim()) { el.style.borderColor = '#C0392B'; valid = false; }
-      else el.style.borderColor = '';
-    });
-    if (!valid) { showToast('Please fill in all required fields', 'error'); return; }
-
-    // Build payload
-    const now  = new Date().toLocaleString('en-AU');
-    const user = document.getElementById('f-user').value.trim();
-
-    // Cost formatting
-    let cost = document.getElementById('f-cost').value.trim();
-    if (cost && !isNaN(parseFloat(cost))) cost = '$' + parseFloat(cost).toFixed(2);
-
-    // Convert files to base64
-    const btn     = document.getElementById('submit-btn');
-    const spinner = document.getElementById('spinner');
-    btn.disabled  = true;
-    document.getElementById('submit-text').textContent = uploadedFiles.length ? 'Uploading files…' : 'Logging…';
-    spinner.classList.add('active');
-
-    let filesPayload = [];
-    try {
-      filesPayload = await Promise.all(uploadedFiles.map(async f => ({
-        name:     f.name,
-        mimeType: f.type || 'application/octet-stream',
-        data:     await readFileAsBase64(f)
-      })));
-    } catch(err) {
-      showToast('Error reading files — please try again', 'error');
-      btn.disabled = false;
-      document.getElementById('submit-text').textContent = 'Log Issue to Google Sheet';
-      spinner.classList.remove('active');
-      return;
-    }
-
-    document.getElementById('submit-text').textContent = 'Saving to Sheet…';
-
-    const payload = {
-      "Date/Time":              document.getElementById('f-date').value,
-      "Resident Name":          document.getElementById('f-name').value.trim(),
-      "How Logged":             document.getElementById('f-medium').value,
-      "Issue":                  document.getElementById('f-issue').value.trim(),
-      "Action Taken":           document.getElementById('f-action').value.trim(),
-      "Response to Resident":   document.getElementById('f-response').value.trim(),
-      "Cost":                   cost,
-      "Other Comments":         document.getElementById('f-other').value.trim(),
-      "Last Updated":           now,
-      "Logged By":              user,
-      "files":                  filesPayload
-    };
-
-    try {
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      showToast('✓ Issue logged to Google Sheet' + (filesPayload.length ? ' and files saved to Drive!' : '!'), 'success');
-      resetForm();
-    } catch(err) {
-      showToast('Error connecting to Google — check your script URL', 'error');
-      console.error(err);
-    } finally {
-      btn.disabled = false;
-      document.getElementById('submit-text').textContent = 'Log Issue to Google Sheet';
-      spinner.classList.remove('active');
-    }
-  });
-
-  // ── RESET ──
-  function resetForm() {
-    document.getElementById('issue-form').reset();
-    uploadedFiles = [];
-    renderFileList();
-    const now = new Date();
-    const local = new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
-    document.getElementById('f-date').value = local;
-    updateLogPreview();
-    ['f-date','f-name','f-medium','f-issue','f-user'].forEach(id =>
-      document.getElementById(id).style.borderColor = ''
-    );
+  // Prev month padding
+  for (let i = firstDay-1; i >= 0; i--) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.textContent = daysInPrev - i;
+    grid.appendChild(d);
   }
 
-  // ── TOAST ──
-  let toastTimer;
-  function showToast(msg, type) {
-    const t = document.getElementById('toast');
-    t.className = type;
-    t.textContent = msg;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.className = ''; t.style.display = 'none'; }, 5000);
+  // Current month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const count = counts[ds] || 0;
+    const d = document.createElement('div');
+    d.className = 'cal-day' + (ds===today?' today':'') + (count>0?' has-issues':'') + (ds===selectedDateStr?' selected':'');
+    d.innerHTML = `<span>${day}</span>`;
+    if (count > 0) {
+      const dots = document.createElement('div');
+      dots.className = 'dots';
+      const n = Math.min(count, 6);
+      for (let i=0;i<n;i++) dots.innerHTML += '<div class="dot"></div>';
+      d.appendChild(dots);
+      d.title = `${count} issue${count>1?'s':''}`;
+      d.addEventListener('click', () => selectDate(ds));
+    }
+    grid.appendChild(d);
   }
+
+  // Next month padding
+  const total = firstDay + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i=1; i<=remaining; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.textContent = i;
+    grid.appendChild(d);
+  }
+}
+
+function selectDate(ds) {
+  selectedDateStr = (selectedDateStr === ds) ? null : ds;
+  renderCalendar();
+  if (selectedDateStr) {
+    const dayIssues = (allIssues||[]).filter(issue => toDateStr(issue['Date/Time']) === selectedDateStr);
+    const sec = document.getElementById('issues-section');
+    const fmt = new Date(selectedDateStr+'T12:00:00').toLocaleDateString('en-AU',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('issues-section-title').textContent = `Issues on ${fmt}`;
+    sec.style.display = 'block';
+    renderIssueList('issues-list', dayIssues);
+    document.getElementById('all-issues-section').style.display = 'none';
+  } else {
+    document.getElementById('issues-section').style.display = 'none';
+    document.getElementById('all-issues-section').style.display = 'block';
+  }
+}
+
+function renderAllIssues() {
+  const sorted = [...(allIssues||[])].sort((a,b) => new Date(b['Date/Time']||0) - new Date(a['Date/Time']||0));
+  renderIssueList('all-issues-list', sorted);
+}
+
+function renderIssueList(elId, issues) {
+  const el = document.getElementById(elId);
+  if (!issues.length) { el.innerHTML = '<div class="issues-empty">No issues found.</div>'; return; }
+  el.innerHTML = issues.map(issue => {
+    const dt = issue['Date/Time'] ? new Date(issue['Date/Time']) : null;
+    const dtStr = dt && !isNaN(dt) ? dt.toLocaleDateString('en-AU',{timeZone:TZ,day:'numeric',month:'short',year:'numeric'}) : (issue['Date/Time']||'–');
+    const medium = issue['How Logged'] || '';
+    const name = issue['Resident Name'] || '(unknown)';
+    const issueText = issue['Issue'] || '';
+    const row = issue.rowIndex || '';
+    return `<div class="issue-card" onclick="openEditModal(${row})">
+      <div>
+        <div class="issue-card-badge">${dtStr}</div>
+        ${medium ? `<div style="font-size:.7rem;color:var(--slate-light);margin-top:4px;text-align:center">${medium}</div>` : ''}
+      </div>
+      <div class="issue-card-body">
+        <div class="issue-card-name">${name}</div>
+        <div class="issue-card-issue">${issueText}</div>
+        <div class="issue-card-meta">${issue['Action Taken'] ? '✓ Action logged' : '⏳ No action yet'} ${issue['Cost'] ? '· '+issue['Cost'] : ''}</div>
+      </div>
+      <div class="issue-card-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════
+// EDIT MODAL
+// ══════════════════════════════
+function openEditModal(rowIndex) {
+  const issue = (allIssues||[]).find(i => i.rowIndex == rowIndex);
+  if (!issue) return;
+
+  document.getElementById('edit-row').value = rowIndex;
+  document.getElementById('edit-modal-title').textContent = `Edit Issue — Row ${rowIndex}`;
+
+  // Parse date for datetime-local input
+  let dtVal = '';
+  if (issue['Date/Time']) {
+    const d = new Date(issue['Date/Time']);
+    if (!isNaN(d)) dtVal = sydneyDateLocal(d);
+    else dtVal = issue['Date/Time'];
+  }
+  document.getElementById('edit-date').value = dtVal;
+  document.getElementById('edit-name').value = issue['Resident Name'] || '';
+  document.getElementById('edit-medium').value = issue['How Logged'] || 'In Person';
+  document.getElementById('edit-issue').value = issue['Issue'] || '';
+  document.getElementById('edit-action').value = issue['Action Taken'] || '';
+  document.getElementById('edit-response').value = issue['Response to Resident'] || '';
+  const cost = String(issue['Cost']||'').replace('$','');
+  document.getElementById('edit-cost').value = cost;
+  document.getElementById('edit-media').value = issue['Media'] || '';
+  document.getElementById('edit-other').value = issue['Other Comments'] || '';
+  document.getElementById('edit-user').value = '';
+
+  document.getElementById('edit-modal-bg').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal-bg').classList.remove('open');
+}
+
+async function saveEdit() {
+  const user = document.getElementById('edit-user').value.trim();
+  if (!user) { showToast('Please enter your name before saving','error'); document.getElementById('edit-user').focus(); return; }
+
+  const rowIndex = document.getElementById('edit-row').value;
+  let cost = document.getElementById('edit-cost').value.trim();
+  if (cost && !isNaN(parseFloat(cost))) cost = '$'+parseFloat(cost).toFixed(2);
+
+  const btn = document.getElementById('edit-save-btn'), sp = document.getElementById('edit-spinner');
+  btn.disabled=true; document.getElementById('edit-save-text').textContent='Saving…'; sp.classList.add('active');
+
+  const payload = {
+    action: "update",
+    rowIndex: parseInt(rowIndex),
+    "Date/Time": document.getElementById('edit-date').value,
+    "Resident Name": document.getElementById('edit-name').value.trim(),
+    "How Logged": document.getElementById('edit-medium').value,
+    "Issue": document.getElementById('edit-issue').value.trim(),
+    "Action Taken": document.getElementById('edit-action').value.trim(),
+    "Response to Resident": document.getElementById('edit-response').value.trim(),
+    "Cost": cost,
+    "Media": document.getElementById('edit-media').value.trim(),
+    "Other Comments": document.getElementById('edit-other').value.trim(),
+    "Last Updated": sydneyStr(),
+    "Logged By": user,
+    "files": []
+  };
+
+  try {
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    showToast('✓ Issue updated successfully!','success');
+    closeEditModal();
+    allIssues = null; // force reload
+    loadIssues();
+  } catch(err) { showToast('Error saving — check connection','error'); }
+  finally { btn.disabled=false; document.getElementById('edit-save-text').textContent='Save Changes'; sp.classList.remove('active'); }
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.className = type; t.textContent = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className=''; t.style.display='none'; }, 5000);
+}
+
+// Init
+initCalendar();
 </script>
 </body>
 </html>
