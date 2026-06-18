@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -233,7 +233,7 @@
           </div>
           <div class="field">
             <label for="f-name">Resident Name <span class="req">*</span></label>
-            <input type="text" id="f-name" placeholder="e.g. Jane Smith" required />
+            <input type="text" spellcheck="true" lang="en-AU" id="f-name" placeholder="e.g. Jane Smith" required />
           </div>
           <div class="field">
             <label for="f-unit">Unit Number <span class="req">*</span></label>
@@ -296,7 +296,7 @@
         </div>
         <div class="field">
           <label for="f-issue">Issue / Feedback <span class="req">*</span></label>
-          <textarea id="f-issue" rows="4" placeholder="Describe the building issue or resident feedback in detail…" required></textarea>
+          <textarea spellcheck="true" lang="en-AU" id="f-issue" rows="4" placeholder="Describe the building issue or resident feedback in detail…" required></textarea>
         </div>
       </div>
 
@@ -316,7 +316,7 @@
         </div>
         <div class="field">
           <label for="f-action">Action Taken</label>
-          <textarea id="f-action" rows="3" placeholder="Describe any steps taken or planned to rectify the issue…"></textarea>
+          <textarea spellcheck="true" lang="en-AU" id="f-action" rows="3" placeholder="Describe any steps taken or planned to rectify the issue…"></textarea>
         </div>
       </div>
 
@@ -349,7 +349,7 @@
         </div>
         <div class="field" id="f-resp-other-wrap" style="display:none;margin-top:.5rem">
           <label for="f-resp-other">Other — please specify</label>
-          <input type="text" id="f-resp-other" placeholder="Describe how response was made…" />
+          <input type="text" spellcheck="true" lang="en-AU" id="f-resp-other" placeholder="Describe how response was made…" />
         </div>
       </div>
 
@@ -360,7 +360,7 @@
             <label for="f-cost">Cost (AUD)</label>
             <div class="currency-wrap">
               <span>$</span>
-              <input type="text" id="f-cost" placeholder="0.00" inputmode="decimal" />
+              <input type="text" spellcheck="true" lang="en-AU" id="f-cost" placeholder="0.00" inputmode="decimal" />
             </div>
           </div>
           <div class="field">
@@ -449,7 +449,7 @@
     </div>
 
     <div class="search-wrap">
-      <input type="text" id="issue-search" placeholder="Search by name, issue, area…" oninput="renderFilteredIssues()" />
+      <input type="text" spellcheck="true" lang="en-AU" id="issue-search" placeholder="Search by name, issue, area…" oninput="renderFilteredIssues()" />
     </div>
 
     <div id="issues-section" style="display:none">
@@ -488,7 +488,7 @@
       </div>
       <div class="edit-field">
         <label>Resident Name</label>
-        <input type="text" id="edit-name" />
+        <input type="text" spellcheck="true" lang="en-AU" id="edit-name" />
       </div>
       <div class="edit-field">
         <label>Unit Number</label>
@@ -512,7 +512,7 @@
     <div class="grid-2">
       <div class="edit-field">
         <label>Originally Logged By</label>
-        <input type="text" id="edit-orig-logged-by" readonly style="background:var(--bg);color:var(--slate-light)" />
+        <input type="text" spellcheck="true" lang="en-AU" id="edit-orig-logged-by" readonly style="background:var(--bg);color:var(--slate-light)" />
       </div>
       <div class="edit-field">
         <label>Issue Status</label>
@@ -540,7 +540,7 @@
     </div>
     <div class="edit-field">
       <label>Issue / Feedback</label>
-      <textarea id="edit-issue" rows="3"></textarea>
+      <textarea spellcheck="true" lang="en-AU" id="edit-issue" rows="3"></textarea>
     </div>
 
     <div class="modal-section">Action</div>
@@ -558,7 +558,7 @@
     </div>
     <div class="edit-field">
       <label>Action Taken</label>
-      <textarea id="edit-action" rows="3"></textarea>
+      <textarea spellcheck="true" lang="en-AU" id="edit-action" rows="3"></textarea>
     </div>
 
     <div class="modal-section">Response to Resident</div>
@@ -589,7 +589,7 @@
     </div>
     <div class="edit-field" id="edit-resp-other-wrap" style="display:none">
       <label>Other — please specify</label>
-      <input type="text" id="edit-resp-other" />
+      <input type="text" spellcheck="true" lang="en-AU" id="edit-resp-other" />
     </div>
 
     <div class="modal-section">Cost &amp; Media</div>
@@ -598,13 +598,14 @@
         <label>Cost (AUD)</label>
         <div class="currency-wrap">
           <span>$</span>
-          <input type="text" id="edit-cost" placeholder="0.00" style="padding-left:26px" />
+          <input type="text" spellcheck="true" lang="en-AU" id="edit-cost" placeholder="0.00" style="padding-left:26px" />
         </div>
       </div>
       <div class="edit-field">
-        <label>Existing Media (Drive links)</label>
-        <input type="text" id="edit-media" placeholder="https://drive.google.com/…" />
-        <p style="font-size:.72rem;color:var(--slate-light);margin-top:3px">Links are clickable — click to view. Separate multiple links with a comma.</p>
+        <label>Existing Media</label>
+        <div id="existing-media-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+        <input type="hidden" id="edit-media" />
+        <p id="no-media-msg" style="font-size:.72rem;color:var(--slate-light);display:none">No media attached to this issue.</p>
       </div>
       <div class="edit-field">
         <label>Add New Media</label>
@@ -621,10 +622,7 @@
         </div>
         <div id="edit-file-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
-      <div class="edit-field" id="edit-media-links-wrap" style="display:none">
-        <label>Current Media Files</label>
-        <div id="edit-media-links"></div>
-      </div>
+
     </div>
 
     <div class="modal-section">Update Log</div>
@@ -648,7 +646,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzF0_VcAOjsLVOpCmaOYc8IyOf5hQ11uXCG4tu1zauHN3kN1CSzIOnuAy8fFu6SkArCNg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjigcpczqPKabeGBwogUUeVtnjmTqOufv_t25gLZYk4kjQtL92GaQ7qh6Di5945OXxeQ/exec";
 const TZ = "Australia/Sydney";
 
 // ── SYDNEY TIME HELPERS ──
@@ -747,6 +745,56 @@ function handleEditDrop(ev) {
   handleEditFiles(ev.dataTransfer.files);
 }
 function removeEditFile(name) { editFiles=editFiles.filter(f=>f.name!==name); renderEditFileList(); }
+
+function renderExistingMediaChips(mediaStr) {
+  const container = document.getElementById('existing-media-chips');
+  const noMsg = document.getElementById('no-media-msg');
+  const links = mediaStr ? mediaStr.split(',').map(l=>l.trim()).filter(Boolean) : [];
+  if (links.length === 0) {
+    container.innerHTML = '';
+    noMsg.style.display = 'block';
+    return;
+  }
+  noMsg.style.display = 'none';
+  container.innerHTML = links.map((link, i) => {
+    // Try to extract a filename from the URL or use a short label
+    const label = `File ${i+1}`;
+    return `<div class="file-chip" style="background:rgba(235,243,250,0.95)">
+      <a href="${link}" target="_blank" style="color:var(--blue);text-decoration:none;font-size:.74rem">🔗 ${label}</a>
+      <button onclick="deleteMediaLink(${i})" title="Remove this file" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85rem;line-height:1;margin-left:2px">×</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteMediaLink(index) {
+  const current = document.getElementById('edit-media').value;
+  const links = current.split(',').map(l=>l.trim()).filter(Boolean);
+  const urlToDelete = links[index];
+  if (!urlToDelete) return;
+
+  // Extract Google Drive file ID from the URL
+  const fileIdMatch = urlToDelete.match(/[-\w]{25,}/);
+  const fileId = fileIdMatch ? fileIdMatch[0] : null;
+
+  if (!confirm('Delete this file from Google Drive permanently?')) return;
+
+  // Remove from the chip list immediately for responsiveness
+  links.splice(index, 1);
+  const newVal = links.join(', ');
+  document.getElementById('edit-media').value = newVal;
+  renderExistingMediaChips(newVal);
+
+  // Tell Apps Script to delete from Drive
+  if (fileId) {
+    try {
+      const payload = { action: 'deleteFile', fileId: fileId };
+      const url = SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
+      await fetch(url, { method: 'GET' });
+    } catch(err) {
+      console.error('Drive delete error:', err);
+    }
+  }
+}
 function renderEditFileList() {
   const el = document.getElementById('edit-file-list');
   if (editFiles.length === 0) { el.innerHTML=''; return; }
@@ -1124,19 +1172,9 @@ function openEditModal(rowIndex){
   document.getElementById('edit-resp-by').value=issue['Response By']||'';
   document.getElementById('edit-cost').value=(issue['Cost']||'').replace('$','');
   document.getElementById('edit-media').value=issue['Media']||'';
-  // Show clickable media links
   editFiles=[];
   renderEditFileList();
-  const mediaVal=issue['Media']||'';
-  const linksWrap=document.getElementById('edit-media-links-wrap');
-  const linksDiv=document.getElementById('edit-media-links');
-  if(mediaVal){
-    const links=mediaVal.split(',').map(l=>l.trim()).filter(Boolean);
-    linksDiv.innerHTML=links.map(l=>`<a href="${l}" target="_blank" style="display:block;font-size:.78rem;color:var(--blue);word-break:break-all;margin-bottom:4px">🔗 ${l}</a>`).join('');
-    linksWrap.style.display='block';
-  } else {
-    linksWrap.style.display='none';
-  }
+  renderExistingMediaChips(issue['Media']||'');
   document.getElementById('edit-user').value='';
   document.getElementById('edit-modal-bg').classList.add('open');
 }
