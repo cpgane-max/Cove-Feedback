@@ -615,7 +615,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPVbYaAsDpK9pXmxuvn-d89JKmiTbhk0uIDRVPmIAgTtn3iaWVc7BqdGleTjbKGNmBeA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQdaBygtPZ3DBLoK8l1FFiT04sbvbUBVu1OQY1Ft-vJjIlxQx_9OAD_s817bW90E3q/exec";
 const TZ = "Australia/Sydney";
 
 // ── SYDNEY TIME HELPERS ──
@@ -816,9 +816,10 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
 
   try {
     const result = await submitData(payload);
-    // After row is written, upload files separately (async, fire & forget)
+    // Use the exact row number returned by the script to avoid race conditions
+    const newRowIndex = result && result.rowIndex ? result.rowIndex : 'new';
     if (filesPayload.length > 0) {
-      uploadFiles(filesPayload, 'new');
+      uploadFiles(filesPayload, newRowIndex);
       showToast('✓ Issue logged! Files uploading to Drive…', 'success');
     } else {
       showToast('✓ Issue logged!', 'success');
