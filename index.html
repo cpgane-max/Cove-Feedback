@@ -663,7 +663,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjigcpczqPKabeGBwogUUeVtnjmTqOufv_t25gLZYk4kjQtL92GaQ7qh6Di5945OXxeQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbbj9Wnbens-2GkYK8MT8KuHlpaIwpnTljK24HLCCrNxLqzAnQMD7sJIc15I9lDEiYag/exec";
 
 // ── PASSWORD PROTECTION ──
 const SESSION_KEY = 'cove_auth';
@@ -862,22 +862,37 @@ async function submitData(payload) {
   return resp.json();
 }
 
-// ── UPLOAD FILES via POST (separate request) ──
+// ── UPLOAD FILES — chunked POST, one file at a time ──
 async function uploadFiles(files, rowRef) {
   if (!files || files.length === 0) return;
-  const payload = {
-    action: 'filesOnly',
-    rowRef: rowRef,
-    files: files
-  };
-  // Use GET so we can await the response and confirm upload completed
-  const url = SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
-  try {
-    const resp = await fetch(url, { method: 'GET' });
-    const result = await resp.json();
-    console.log('Upload result:', result);
-  } catch(err) {
-    console.error('Upload error:', err);
+  for (const file of files) {
+    const payload = {
+      action: 'filesOnly',
+      rowRef: rowRef,
+      files: [file]
+    };
+    const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
+    try {
+      // Try fetch POST first (works when CORS is properly configured)
+      const resp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+      });
+      const result = await resp.json();
+      console.log('Upload result:', result);
+    } catch(err) {
+      // Fallback: no-cors POST (fire and forget)
+      console.log('Falling back to no-cors POST for file:', file.name);
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+      });
+      // Give it time to process
+      await new Promise(r => setTimeout(r, 2000));
+    }
   }
 }
 
