@@ -726,7 +726,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwerQJ-E1a1eYNNlNQyeqOtpi6-9liFJxNHVkAO96szuRc1NXGZwy8-zr6d5VX-Y7OlgQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvIwj8eivJuPYnMuCVi132qypdG_Su823pqiEDE4PYpDH9wCxQOMtFRMeREoT9sc6o2Q/exec";
 
 // ── PASSWORD PROTECTION ──
 const SESSION_KEY = 'cove_auth';
@@ -805,7 +805,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='calendar') loadIssues();
-  if(tab==='dashboard') loadDashboard();
+  if(tab==='dashboard'){ dashLoaded=false; loadDashboard(); }
 }
 
 // ══════════════════════════════
@@ -835,14 +835,22 @@ async function loadDashboard() {
   }
 }
 
+function parseCost(v) {
+  return parseFloat(String(v||'').replace(/[$,]/g,'')) || 0;
+}
+function fmtCurrency(v) {
+  return '$' + v.toLocaleString('en-AU', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
 function renderDashboard(data) {
   // ── DONUT: Open vs Closed ──
   const ss = data.statusSummary;
   const statusLabels=[], statusVals=[];
   if (ss && ss.rows) {
     ss.rows.forEach(r => {
-      if (r[0] && r[0].toLowerCase() !== 'grand total') {
-        statusLabels.push(r[0]);
+      const label = String(r[0]||'').trim();
+      if (label && label.toLowerCase() !== 'grand total') {
+        statusLabels.push(label);
         statusVals.push(parseFloat(r[1])||0);
       }
     });
@@ -851,17 +859,15 @@ function renderDashboard(data) {
   chartInstances['status'] = new Chart(document.getElementById('chart-status'), {
     type:'doughnut',
     data:{
-      labels: statusLabels,
+      labels:statusLabels,
       datasets:[{data:statusVals, backgroundColor:['#CBD5E0','#1E7E5A'], borderWidth:2, borderColor:'#fff'}]
     },
     options:{
-      responsive:true,
-      maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}`}}},
       cutout:'65%'
     }
   });
-  // Legend
   document.getElementById('status-legend').innerHTML = statusLabels.map((l,i)=>
     `<span style="display:inline-flex;align-items:center;gap:4px;margin:0 8px">
       <span style="width:10px;height:10px;border-radius:50%;background:${['#CBD5E0','#1E7E5A'][i]};display:inline-block"></span>${l}: <strong>${statusVals[i]}</strong>
@@ -869,15 +875,24 @@ function renderDashboard(data) {
   ).join('');
 
   // ── STACKED BAR: Monthly ──
+  // The pivot has 2 header rows: row 0 = "Issues Per Month / Status"
+  // row 1 = "Date - Month / Closed / Open / Grand Total"
+  // So actual data rows start at index 2 (skip first 2 rows)
   const md = data.monthlyDetail;
   const months=[], closedVals=[], openVals=[];
   if (md && md.rows) {
+    // Skip header-like rows — skip any row where first cell looks like a header
+    let dataStarted = false;
     md.rows.forEach(r => {
-      if (r[0] && r[0].toLowerCase() !== 'grand total') {
-        months.push(r[0]);
-        closedVals.push(parseFloat(r[1])||0);
-        openVals.push(parseFloat(r[2])||0);
-      }
+      const label = String(r[0]||'').trim();
+      if (!label || label.toLowerCase() === 'grand total') return;
+      // Skip rows that look like sub-headers (no numeric data in col 1)
+      const val1 = parseFloat(String(r[1]||'').replace(/[$,]/g,''));
+      if (isNaN(val1) && !dataStarted) return; // skip header rows
+      dataStarted = true;
+      months.push(label);
+      closedVals.push(parseFloat(r[1])||0);
+      openVals.push(parseFloat(r[2])||0);
     });
   }
   destroyChart('monthly');
@@ -891,27 +906,29 @@ function renderDashboard(data) {
       ]
     },
     options:{
-      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:1}}},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      responsive:true,
-      maintainAspectRatio:false
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{stacked:true, grid:{display:false}},
+        y:{stacked:true, beginAtZero:true, ticks:{stepSize:1, precision:0}}
+      },
+      plugins:{legend:{position:'bottom', labels:{font:{size:11}}}}
     }
   });
 
-  // ── HORIZONTAL BAR: Trade ──
+  // ── HORIZONTAL BAR: Trade (issues count only, no cost axis) ──
   const td = data.tradeSummary;
-  const tradeLabels=[], tradeCounts=[], tradeCosts=[];
+  const tradeLabels=[], tradeCounts=[];
   if (td && td.rows) {
     td.rows.forEach(r => {
-      if (r[0] && r[0].toLowerCase() !== 'grand total') {
-        tradeLabels.push(r[0]);
-        tradeCounts.push(parseFloat(r[1])||0);
-        const costStr = String(r[2]||'').replace(/[$,]/g,'');
-        tradeCosts.push(parseFloat(costStr)||0);
-      }
+      const label = String(r[0]||'').trim();
+      if (!label || label.toLowerCase() === 'grand total') return;
+      const count = parseFloat(r[1])||0;
+      if (isNaN(parseFloat(r[1])) && tradeCounts.length === 0) return; // skip header rows
+      tradeLabels.push(label);
+      tradeCounts.push(count);
     });
   }
-  const tradeH = Math.max(180, tradeLabels.length * 36);
+  const tradeH = Math.max(160, tradeLabels.length * 40);
   document.getElementById('chart-trade-wrap').style.height = tradeH + 'px';
   destroyChart('trade');
   chartInstances['trade'] = new Chart(document.getElementById('chart-trade'), {
@@ -921,28 +938,30 @@ function renderDashboard(data) {
       datasets:[{label:'Issues',data:tradeCounts,backgroundColor:'#2C5F8A',borderRadius:4}]
     },
     options:{
+      responsive:true, maintainAspectRatio:false,
       indexAxis:'y',
-      scales:{x:{beginAtZero:true,ticks:{stepSize:1},grid:{display:false}},y:{grid:{display:false}}},
-      plugins:{legend:{display:false}},
-      responsive:true,
-      maintainAspectRatio:false
+      scales:{
+        x:{beginAtZero:true, ticks:{stepSize:1, precision:0}, grid:{display:false}},
+        y:{grid:{display:false}}
+      },
+      plugins:{legend:{display:false}}
     }
   });
 
-  // ── HORIZONTAL BAR: Category ──
+  // ── HORIZONTAL BAR: Category — separate axes, issues on bottom, cost on right ──
   const cd = data.categorySummary;
   const catLabels=[], catCounts=[], catCosts=[];
   if (cd && cd.rows) {
     cd.rows.forEach(r => {
-      if (r[0] && r[0].toLowerCase() !== 'grand total') {
-        catLabels.push(r[0]);
-        catCounts.push(parseFloat(r[1])||0);
-        const costStr = String(r[2]||'').replace(/[$,]/g,'');
-        catCosts.push(parseFloat(costStr)||0);
-      }
+      const label = String(r[0]||'').trim();
+      if (!label || label.toLowerCase() === 'grand total') return;
+      if (isNaN(parseFloat(r[1])) && catCounts.length === 0) return; // skip header rows
+      catLabels.push(label);
+      catCounts.push(parseFloat(r[1])||0);
+      catCosts.push(parseCost(r[2]));
     });
   }
-  const catH = Math.max(180, catLabels.length * 36);
+  const catH = Math.max(160, catLabels.length * 40);
   document.getElementById('chart-category-wrap').style.height = catH + 'px';
   destroyChart('category');
   chartInstances['category'] = new Chart(document.getElementById('chart-category'), {
@@ -950,35 +969,47 @@ function renderDashboard(data) {
     data:{
       labels:catLabels,
       datasets:[
-        {label:'Issues',data:catCounts,backgroundColor:'#E8A020',borderRadius:4},
-        {label:'Cost ($)',data:catCosts,backgroundColor:'rgba(192,57,43,0.7)',borderRadius:4,yAxisID:'y2'}
+        {label:'No. of Issues', data:catCounts, backgroundColor:'#E8A020', borderRadius:4, xAxisID:'x1'},
+        {label:'Cost (AUD)',    data:catCosts,  backgroundColor:'rgba(192,57,43,0.65)', borderRadius:4, xAxisID:'x2'}
       ]
     },
     options:{
+      responsive:true, maintainAspectRatio:false,
       indexAxis:'y',
       scales:{
-        x:{beginAtZero:true,ticks:{stepSize:1},grid:{display:false}},
-        y:{grid:{display:false}},
-        y2:{position:'right',beginAtZero:true,grid:{display:false},ticks:{callback:v=>'$'+v}}
+        x1:{position:'bottom', beginAtZero:true, ticks:{stepSize:1, precision:0}, grid:{display:false}, title:{display:true, text:'No. of Issues', font:{size:10}}},
+        x2:{position:'top',    beginAtZero:true, grid:{display:false}, ticks:{callback:v=>fmtCurrency(v)}, title:{display:true, text:'Cost (AUD)', font:{size:10}}},
+        y:{grid:{display:false}}
       },
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      responsive:true,
-      maintainAspectRatio:false
+      plugins:{legend:{position:'bottom', labels:{font:{size:11}}}}
     }
   });
 
   // ── TABLES ──
   renderDashTable('table-trade', td);
-  renderDashTable('table-category', cd);
+  renderDashTable('table-category', cd, [null, null, 'currency']);
 }
 
-function renderDashTable(elId, tableData) {
+function renderDashTable(elId, tableData, colFormats) {
   if (!tableData || !tableData.headers || !tableData.rows) return;
   const el = document.getElementById(elId);
+  const fmts = colFormats || [];
+  // Filter out header-like rows (rows where numeric columns are NaN)
+  const dataRows = tableData.rows.filter(r => {
+    const label = String(r[0]||'').trim();
+    if (!label) return false;
+    return true;
+  });
   el.innerHTML = '<table class="dash-table"><thead><tr>' +
     tableData.headers.map(h=>`<th>${h}</th>`).join('') +
     '</tr></thead><tbody>' +
-    tableData.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') +
+    dataRows.map(r=>`<tr>${r.map((c,i)=>{
+      if (fmts[i]==='currency') {
+        const v = parseCost(c);
+        return `<td>${fmtCurrency(v)}</td>`;
+      }
+      return `<td>${c}</td>`;
+    }).join('')}</tr>`).join('') +
     '</tbody></table>';
 }
 
