@@ -424,6 +424,15 @@
     </div>
 
     <!-- Date filter + search -->
+    <!-- Open/All toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+      <span style="font-size:.78rem;font-weight:600;color:var(--slate)">Issues:</span>
+      <div style="display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:rgba(255,255,255,0.9)">
+        <button id="toggle-all" onclick="setStatusFilter('all')" style="padding:6px 18px;border:none;background:var(--blue);color:white;font-size:.78rem;font-weight:600;cursor:pointer">All</button>
+        <button id="toggle-open" onclick="setStatusFilter('open')" style="padding:6px 18px;border:none;background:none;color:var(--slate);font-size:.78rem;font-weight:600;cursor:pointer">Open Only</button>
+      </div>
+    </div>
+
     <div class="date-filter" id="date-filter">
       <span style="font-size:.78rem;font-weight:600;color:var(--slate)">Show:</span>
       <button class="filter-btn active" onclick="setFilter('recent',this)">10 Most Recent</button>
@@ -868,14 +877,20 @@ function resetForm(){
 // ══════════════════════════════
 // CALENDAR & ISSUES
 // ══════════════════════════════
-let allIssues=null, calYear, calMonth, selectedDateStr=null, currentFilter='recent', showAllFlag=false;
+let allIssues=null, calYear, calMonth, selectedDateStr=null, currentFilter='recent', showAllFlag=false, statusFilter='all';
 
 function toDateStr(val){
   if(!val)return null;
   const s=String(val).trim();
-  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return`${m[1]}-${m[2]}-${m[3]}`;
-  const au=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(au)return`${au[3]}-${au[2].padStart(2,'0')}-${au[1].padStart(2,'0')}`;
-  const d=new Date(s);if(!isNaN(d))return sydneyDateOnly(d);
+  // DD/MM/YYYY (Google Sheets en-AU)
+  const au=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(au)return`${au[3]}-${au[2].padStart(2,'0')}-${au[1].padStart(2,'0')}`;
+  // YYYY-MM-DD
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso)return`${iso[1]}-${iso[2]}-${iso[3]}`;
+  // Fallback
+  const d=new Date(s);
+  if(!isNaN(d))return sydneyDateOnly(d);
   return null;
 }
 
@@ -958,6 +973,16 @@ function clearDateSelection(){
 }
 
 // ── FILTER ──
+function setStatusFilter(val) {
+  statusFilter = val;
+  document.getElementById('toggle-all').style.background = val==='all' ? 'var(--blue)' : 'none';
+  document.getElementById('toggle-all').style.color = val==='all' ? 'white' : 'var(--slate)';
+  document.getElementById('toggle-open').style.background = val==='open' ? 'var(--green)' : 'none';
+  document.getElementById('toggle-open').style.color = val==='open' ? 'white' : 'var(--slate)';
+  showAllFlag=false;
+  renderFilteredIssues();
+}
+
 function setFilter(f,btn){
   currentFilter=f; showAllFlag=false;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
@@ -968,36 +993,62 @@ function setFilter(f,btn){
 function applyCustomFilter(){renderFilteredIssues();}
 function showAllInFilter(){showAllFlag=true;renderFilteredIssues();}
 
+function parseIssueDate(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  const au = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (au) return new Date(`${au[3]}-${au[2].padStart(2,'0')}-${au[1].padStart(2,'0')}T12:00:00`);
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(`${iso[1]}-${iso[2]}-${iso[3]}T12:00:00`);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function dateOnly(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
 function getFilteredIssues(){
-  const now=new Date();
-  let from=null,to=new Date();
-  if(currentFilter==='3m'){from=new Date();from.setMonth(from.getMonth()-3);}
-  else if(currentFilter==='6m'){from=new Date();from.setMonth(from.getMonth()-6);}
-  else if(currentFilter==='ytd'){from=new Date(now.getFullYear(),0,1);}
-  else if(currentFilter==='1y'){from=new Date();from.setFullYear(from.getFullYear()-1);}
-  else if(currentFilter==='custom'){
+  const now = dateOnly(new Date());
+  let from = null, to = now;
+
+  if (currentFilter==='3m') { from=new Date(now); from.setMonth(from.getMonth()-3); }
+  else if (currentFilter==='6m') { from=new Date(now); from.setMonth(from.getMonth()-6); }
+  else if (currentFilter==='ytd') { from=new Date(now.getFullYear(),0,1); }
+  else if (currentFilter==='1y') { from=new Date(now); from.setFullYear(from.getFullYear()-1); }
+  else if (currentFilter==='custom') {
     const f=document.getElementById('custom-from').value;
     const t=document.getElementById('custom-to').value;
-    if(f) from=new Date(f);
-    if(t) to=new Date(t+'T23:59:59');
+    if (f) from=dateOnly(new Date(f+'T12:00:00'));
+    if (t) to=dateOnly(new Date(t+'T12:00:00'));
   }
-  let issues=[...(allIssues||[])].sort((a,b)=>new Date(b['Date/Time']||0)-new Date(a['Date/Time']||0));
-  if(from||currentFilter!=='recent'){
+
+  let issues=[...(allIssues||[])].sort((a,b)=>{
+    const da=parseIssueDate(a['Date'])||new Date(0);
+    const db=parseIssueDate(b['Date'])||new Date(0);
+    return db-da;
+  });
+
+  if (statusFilter==='open') {
+    issues=issues.filter(i=>(i['Status']||'Open').toLowerCase()!=='closed');
+  }
+
+  if (currentFilter!=='recent') {
     issues=issues.filter(i=>{
-      const d=new Date(i['Date/Time']||0);
-      return(!from||d>=from)&&d<=to;
+      const d=parseIssueDate(i['Date']);
+      if (!d) return false;
+      const dd=dateOnly(d);
+      return (!from || dd>=from) && dd<=to;
     });
   }
+
   const search=document.getElementById('issue-search').value.toLowerCase();
-  if(search) issues=issues.filter(i=>
+  if (search) issues=issues.filter(i=>
     (i['Resident Name']||'').toLowerCase().includes(search)||
     (i['Issue']||'').toLowerCase().includes(search)||
     (i['Category']||'').toLowerCase().includes(search)||
+    (i['Unit Number']||'').toLowerCase().includes(search)||
     (i['Trade Assigned']||'').toLowerCase().includes(search)
   );
   return issues;
 }
-
 function renderFilteredIssues(){
   let issues=getFilteredIssues();
   const total=issues.length;
@@ -1018,7 +1069,7 @@ function renderIssueList(elId,issues){
   const el=document.getElementById(elId);
   if(!issues.length){el.innerHTML='<div class="issues-empty">No issues found.</div>';return;}
   el.innerHTML=issues.map(issue=>{
-    const dt=issue['Date']?new Date(issue['Date']+'T12:00:00'):null;
+    const dt=parseIssueDate(issue['Date']);
     const dtStr=dt&&!isNaN(dt)?dt.toLocaleDateString('en-AU',{timeZone:TZ,day:'numeric',month:'short',year:'numeric'}):(issue['Date/Time']||'–');
     const status=issue['Status']||'Open';
     const isClosed=status==='Closed';
