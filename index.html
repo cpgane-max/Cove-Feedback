@@ -353,18 +353,24 @@
           </div>
           <div class="field">
             <label>Media / Attachments</label>
+            <!-- Hidden inputs -->
+            <input type="file" id="f-media" multiple accept="image/*,.pdf,.doc,.docx,.eml,.msg,video/*" onchange="handleFiles(this.files);this.value=''" style="display:none" />
+            <input type="file" id="f-media-camera" accept="image/*,video/*" capture="environment" onchange="handleFiles(this.files)" style="display:none" />
+
             <div class="upload-zone" id="upload-zone"
-              onclick="document.getElementById('f-media').click()"
               ondragover="handleDragOver(event)"
               ondragleave="handleDragLeave(event)"
               ondrop="handleDrop(event)">
-              <input type="file" id="f-media" multiple accept="image/*,.pdf,.doc,.docx,.eml,.msg,video/*" capture onchange="handleFiles(this.files)" />
               <div class="up-icon">📎</div>
-              <p><strong>Click to upload</strong> or drag &amp; drop</p>
-              <p>Images · PDFs · Emails (.eml/.msg) · Camera</p>
+              <p><strong>Drag &amp; drop</strong> files here</p>
+              <p style="margin-top:6px">or</p>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap">
+                <button type="button" onclick="document.getElementById('f-media').click()" style="padding:7px 16px;background:var(--blue);color:white;border:none;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer">📁 Choose File / Gallery</button>
+                <button type="button" onclick="document.getElementById('f-media-camera').click()" style="padding:7px 16px;background:var(--slate);color:white;border:none;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer">📷 Take Photo</button>
+              </div>
+              <p style="margin-top:8px;font-size:.72rem;color:var(--slate-light)">Select multiple files at once from gallery · Tap 📷 repeatedly to add more photos</p>
             </div>
             <div id="file-list"></div>
-            <p class="help">On mobile: tap to use camera or choose from photo album</p>
           </div>
         </div>
       </div>
@@ -563,8 +569,28 @@
         </div>
       </div>
       <div class="edit-field">
-        <label>Media (Drive links, comma-separated)</label>
+        <label>Existing Media (Drive links)</label>
         <input type="text" id="edit-media" placeholder="https://drive.google.com/…" />
+        <p style="font-size:.72rem;color:var(--slate-light);margin-top:3px">Links are clickable — click to view. Separate multiple links with a comma.</p>
+      </div>
+      <div class="edit-field">
+        <label>Add New Media</label>
+        <input type="file" id="edit-media-file" multiple accept="image/*,.pdf,.doc,.docx,.eml,.msg,video/*" onchange="handleEditFiles(this.files);this.value=''" style="display:none" />
+        <input type="file" id="edit-media-camera" accept="image/*,video/*" capture="environment" onchange="handleEditFiles(this.files);this.value=''" style="display:none" />
+        <div class="upload-zone" id="edit-upload-zone"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleEditDrop(event)">
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button type="button" onclick="document.getElementById('edit-media-file').click()" style="padding:7px 16px;background:var(--blue);color:white;border:none;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer">📁 Choose File / Gallery</button>
+            <button type="button" onclick="document.getElementById('edit-media-camera').click()" style="padding:7px 16px;background:var(--slate);color:white;border:none;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer">📷 Take Photo</button>
+          </div>
+        </div>
+        <div id="edit-file-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div class="edit-field" id="edit-media-links-wrap" style="display:none">
+        <label>Current Media Files</label>
+        <div id="edit-media-links"></div>
       </div>
     </div>
 
@@ -656,7 +682,7 @@ function toggleRespOther(sel,wrapId) {
 }
 
 // ── FILE HANDLING ──
-let uploadedFiles=[];
+let uploadedFiles=[], editFiles=[];
 function handleFiles(files) {
   for(const f of files) if(!uploadedFiles.find(x=>x.name===f.name)) uploadedFiles.push(f);
   renderFileList();
@@ -670,9 +696,31 @@ function handleDrop(ev) {
 }
 function removeFile(name) { uploadedFiles=uploadedFiles.filter(f=>f.name!==name); renderFileList(); }
 function renderFileList() {
-  document.getElementById('file-list').innerHTML=uploadedFiles.map(f=>{
+  const el = document.getElementById('file-list');
+  if (uploadedFiles.length === 0) { el.innerHTML=''; return; }
+  const countBadge = uploadedFiles.length > 1 ? `<div style="font-size:.72rem;color:var(--blue);font-weight:600;margin-bottom:4px;width:100%">${uploadedFiles.length} files selected</div>` : '';
+  el.innerHTML = countBadge + uploadedFiles.map(f=>{
     const icon=f.type.startsWith('image/')?'🖼️':f.name.match(/\.(eml|msg)$/i)?'📧':f.type.includes('pdf')?'📄':'📎';
     return `<div class="file-chip">${icon} ${f.name}<button onclick="removeFile(${JSON.stringify(f.name)})" title="Remove">×</button></div>`;
+  }).join('');
+}
+function handleEditFiles(files) {
+  for(const f of files) if(!editFiles.find(x=>x.name===f.name)) editFiles.push(f);
+  renderEditFileList();
+}
+function handleEditDrop(ev) {
+  ev.preventDefault();
+  document.getElementById('edit-upload-zone').classList.remove('drag-over');
+  handleEditFiles(ev.dataTransfer.files);
+}
+function removeEditFile(name) { editFiles=editFiles.filter(f=>f.name!==name); renderEditFileList(); }
+function renderEditFileList() {
+  const el = document.getElementById('edit-file-list');
+  if (editFiles.length === 0) { el.innerHTML=''; return; }
+  const countBadge = editFiles.length > 1 ? `<div style="font-size:.72rem;color:var(--blue);font-weight:600;margin-bottom:4px;width:100%">${editFiles.length} files queued to upload</div>` : '';
+  el.innerHTML = countBadge + editFiles.map(f=>{
+    const icon=f.type.startsWith('image/')?'🖼️':f.name.match(/\.(eml|msg)$/i)?'📧':f.type.includes('pdf')?'📄':'📎';
+    return `<div class="file-chip">${icon} ${f.name}<button onclick="removeEditFile(${JSON.stringify(f.name)})" title="Remove">×</button></div>`;
   }).join('');
 }
 function readFileAsBase64(file) {
@@ -998,10 +1046,23 @@ function openEditModal(rowIndex){
   document.getElementById('edit-resp-by').value=issue['Response By']||'';
   document.getElementById('edit-cost').value=(issue['Cost']||'').replace('$','');
   document.getElementById('edit-media').value=issue['Media']||'';
+  // Show clickable media links
+  editFiles=[];
+  renderEditFileList();
+  const mediaVal=issue['Media']||'';
+  const linksWrap=document.getElementById('edit-media-links-wrap');
+  const linksDiv=document.getElementById('edit-media-links');
+  if(mediaVal){
+    const links=mediaVal.split(',').map(l=>l.trim()).filter(Boolean);
+    linksDiv.innerHTML=links.map(l=>`<a href="${l}" target="_blank" style="display:block;font-size:.78rem;color:var(--blue);word-break:break-all;margin-bottom:4px">🔗 ${l}</a>`).join('');
+    linksWrap.style.display='block';
+  } else {
+    linksWrap.style.display='none';
+  }
   document.getElementById('edit-user').value='';
   document.getElementById('edit-modal-bg').classList.add('open');
 }
-function closeEditModal(){document.getElementById('edit-modal-bg').classList.remove('open');}
+function closeEditModal(){document.getElementById('edit-modal-bg').classList.remove('open');editFiles=[];renderEditFileList();}
 
 async function saveEdit(){
   const user=document.getElementById('edit-user').value;
@@ -1013,6 +1074,20 @@ async function saveEdit(){
   btn.disabled=true;document.getElementById('edit-save-text').textContent='Saving…';sp.classList.add('active');
   const respHow=document.getElementById('edit-resp-how').value;
   const respOther=respHow==='Other'?document.getElementById('edit-resp-other').value:'';
+  // Build edit files payload with Drive naming
+  const editCategory=document.getElementById('edit-area').value||'General';
+  const editDateEl=document.getElementById('edit-date').value;
+  const editDatePrefix=editDateEl?editDateEl.slice(2,10).replace(/T.*/,''):'';
+  const editDriveName=`${editDatePrefix} - ${editCategory}`;
+  let editFilesPayload=[];
+  try {
+    editFilesPayload=await Promise.all(editFiles.map(async f=>({
+      name: editDriveName+(editFiles.length>1?'_'+f.name.split('.').pop():'.'+f.name.split('.').pop()),
+      mimeType:f.type||'application/octet-stream',
+      data:await readFileAsBase64(f)
+    })));
+  } catch(err){ showToast('Error reading files','error'); return; }
+
   const payload={
     action:"update",rowIndex:parseInt(rowIndex),
     "Date/Time":            document.getElementById('edit-date').value,
