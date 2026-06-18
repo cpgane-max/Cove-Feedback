@@ -857,9 +857,10 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
   const btn=document.getElementById('submit-btn'),sp=document.getElementById('spinner');
   btn.disabled=true; document.getElementById('submit-text').textContent='Saving…'; sp.classList.add('active');
 
-  // Build file names for Drive naming: "YY-MM-DD - Category"
+  // Build file names for Drive naming: "YY-MM-DD - Category" (date raised)
   const category=document.getElementById('f-area').value||'General';
-  const datePrefix=sydneyDateOnly().slice(2); // YY-MM-DD
+  const raisedDate=document.getElementById('f-date').value; // YYYY-MM-DD
+  const datePrefix=raisedDate?raisedDate.slice(2):sydneyDateOnly().slice(2); // YY-MM-DD
   const driveName=`${datePrefix} - ${category}`;
 
   let filesPayload=[];
@@ -1150,7 +1151,11 @@ function openEditModal(rowIndex){
   document.getElementById('edit-row').value=rowIndex;
   document.getElementById('edit-modal-title').textContent=`Edit Issue — ${issue['Resident Name']||'Row '+rowIndex}`;
   let dtVal='';
-  if(issue['Date']){const d=new Date(issue['Date']);if(!isNaN(d))dtVal=sydneyDateOnly(d);else dtVal=issue['Date'];}
+  if(issue['Date']){
+    const d=parseIssueDate(issue['Date']);
+    if(d&&!isNaN(d))dtVal=sydneyDateOnly(d);
+    else dtVal=issue['Date'];
+  }
   document.getElementById('edit-date').value=dtVal;
   document.getElementById('edit-name').value=issue['Resident Name']||'';
   document.getElementById('edit-unit').value=issue['Unit Number']||'';
@@ -1167,7 +1172,12 @@ function openEditModal(rowIndex){
   document.getElementById('edit-resp-how').value=issue['Response How']||'';
   toggleRespOther(document.getElementById('edit-resp-how'),'edit-resp-other-wrap');
   let respDate='';
-  if(issue['Response Date']){const d=new Date(issue['Response Date']);if(!isNaN(d))respDate=sydneyDateOnly(d);}
+  if(issue['Response Date']){
+    // Use parseIssueDate to handle DD/MM/YYYY from Google Sheets
+    const d=parseIssueDate(issue['Response Date']);
+    if(d&&!isNaN(d))respDate=sydneyDateOnly(d);
+    else respDate=issue['Response Date'];
+  }
   document.getElementById('edit-resp-date').value=respDate;
   document.getElementById('edit-resp-by').value=issue['Response By']||'';
   document.getElementById('edit-cost').value=(issue['Cost']||'').replace('$','');
@@ -1190,10 +1200,10 @@ async function saveEdit(){
   btn.disabled=true;document.getElementById('edit-save-text').textContent='Saving…';sp.classList.add('active');
   const respHow=document.getElementById('edit-resp-how').value;
   const respOther=respHow==='Other'?document.getElementById('edit-resp-other').value:'';
-  // Build edit files payload with Drive naming
+  // Build edit files payload with Drive naming: YY-MM-DD (date raised) - Category
   const editCategory=document.getElementById('edit-area').value||'General';
-  const editDateEl=document.getElementById('edit-date').value;
-  const editDatePrefix=editDateEl?editDateEl.slice(2,10).replace(/T.*/,''):'';
+  const editDateEl=document.getElementById('edit-date').value; // YYYY-MM-DD
+  const editDatePrefix=editDateEl?editDateEl.slice(2):''; // YY-MM-DD
   const editDriveName=`${editDatePrefix} - ${editCategory}`;
   let editFilesPayload=[];
   try {
@@ -1227,8 +1237,8 @@ async function saveEdit(){
   };
   try{
     await submitData(payload);
-    if (editFiles && editFiles.length > 0) {
-      uploadFiles(editFiles, parseInt(rowIndex));
+    if (editFilesPayload && editFilesPayload.length > 0) {
+      uploadFiles(editFilesPayload, parseInt(rowIndex));
       showToast('✓ Issue updated! Files uploading to Drive…','success');
     } else {
       showToast('✓ Issue updated!','success');
