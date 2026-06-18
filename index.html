@@ -232,6 +232,7 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('log')">📋 Log New Issue</button>
     <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar &amp; Issues</button>
+    <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
   </div>
 </div>
 
@@ -484,6 +485,51 @@
     </div>
 
   </div>
+
+  <!-- ══ DASHBOARD TAB ══ -->
+  <div class="tab-panel" id="tab-dashboard">
+    <div id="dash-loading" style="text-align:center;padding:3rem;color:rgba(255,255,255,0.8);font-size:.9rem">Loading dashboard…</div>
+    <div id="dash-content" style="display:none">
+
+      <!-- Row 1: Donut + Monthly Bar -->
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;margin-bottom:1.25rem">
+        <div class="card" style="padding:1.2rem">
+          <div class="section-label">Open vs Closed</div>
+          <canvas id="chart-status" height="220"></canvas>
+          <div id="status-legend" style="margin-top:10px;font-size:.78rem;text-align:center"></div>
+        </div>
+        <div class="card" style="padding:1.2rem">
+          <div class="section-label">Issues per Month</div>
+          <canvas id="chart-monthly" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Row 2: Trade + Category -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem">
+        <div class="card" style="padding:1.2rem">
+          <div class="section-label">Issues by Trade</div>
+          <canvas id="chart-trade"></canvas>
+        </div>
+        <div class="card" style="padding:1.2rem">
+          <div class="section-label">Issues by Category</div>
+          <canvas id="chart-category"></canvas>
+        </div>
+      </div>
+
+      <!-- Row 3: Raw tables -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div class="card" style="padding:1.2rem">
+          <div class="section-label">Trade Detail</div>
+          <div id="table-trade"></div>
+        </div>
+        <div class="card" style="padding:1.2rem">
+          <div class="section-label">Category Detail</div>
+          <div id="table-category"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </main>
 
 <div id="toast"></div>
@@ -662,8 +708,17 @@
   </div>
 </div>
 
+<style>
+  .dash-table { width:100%;border-collapse:collapse;font-size:.8rem; }
+  .dash-table th { background:var(--blue-light);color:var(--blue-dark);padding:7px 10px;text-align:left;font-weight:600;font-size:.72rem;letter-spacing:.04em; }
+  .dash-table td { padding:6px 10px;border-bottom:1px solid var(--border);color:var(--slate); }
+  .dash-table tr:last-child td { border-bottom:none;font-weight:700;background:var(--bg); }
+  .dash-table td:not(:first-child) { text-align:right; }
+  .dash-table th:not(:first-child) { text-align:right; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbbj9Wnbens-2GkYK8MT8KuHlpaIwpnTljK24HLCCrNxLqzAnQMD7sJIc15I9lDEiYag/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwerQJ-E1a1eYNNlNQyeqOtpi6-9liFJxNHVkAO96szuRc1NXGZwy8-zr6d5VX-Y7OlgQ/exec";
 
 // ── PASSWORD PROTECTION ──
 const SESSION_KEY = 'cove_auth';
@@ -738,10 +793,178 @@ document.getElementById('edit-status').addEventListener('change',function(){
 
 // ── TABS ──
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['log','calendar'][i]===tab));
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['log','calendar','dashboard'][i]===tab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='calendar') loadIssues();
+  if(tab==='dashboard') loadDashboard();
+}
+
+// ══════════════════════════════
+// DASHBOARD
+// ══════════════════════════════
+let dashLoaded = false;
+let chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+async function loadDashboard() {
+  if (dashLoaded) return;
+  document.getElementById('dash-loading').style.display='block';
+  document.getElementById('dash-content').style.display='none';
+  try {
+    const resp = await fetch(SCRIPT_URL + '?dashboard=1&t=' + Date.now());
+    const data = await resp.json();
+    if (data.result !== 'success') throw new Error(data.msg||'Unknown error');
+    renderDashboard(data);
+    dashLoaded = true;
+    document.getElementById('dash-loading').style.display='none';
+    document.getElementById('dash-content').style.display='block';
+  } catch(err) {
+    document.getElementById('dash-loading').textContent = 'Error loading dashboard: ' + err.message;
+  }
+}
+
+function renderDashboard(data) {
+  // ── DONUT: Open vs Closed ──
+  const ss = data.statusSummary;
+  const statusLabels=[], statusVals=[];
+  if (ss && ss.rows) {
+    ss.rows.forEach(r => {
+      if (r[0] && r[0].toLowerCase() !== 'grand total') {
+        statusLabels.push(r[0]);
+        statusVals.push(parseFloat(r[1])||0);
+      }
+    });
+  }
+  destroyChart('status');
+  chartInstances['status'] = new Chart(document.getElementById('chart-status'), {
+    type:'doughnut',
+    data:{
+      labels: statusLabels,
+      datasets:[{data:statusVals, backgroundColor:['#CBD5E0','#1E7E5A'], borderWidth:2, borderColor:'#fff'}]
+    },
+    options:{
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}`}}},
+      cutout:'65%'
+    }
+  });
+  // Legend
+  document.getElementById('status-legend').innerHTML = statusLabels.map((l,i)=>
+    `<span style="display:inline-flex;align-items:center;gap:4px;margin:0 8px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${['#CBD5E0','#1E7E5A'][i]};display:inline-block"></span>${l}: <strong>${statusVals[i]}</strong>
+    </span>`
+  ).join('');
+
+  // ── STACKED BAR: Monthly ──
+  const md = data.monthlyDetail;
+  const months=[], closedVals=[], openVals=[];
+  if (md && md.rows) {
+    md.rows.forEach(r => {
+      if (r[0] && r[0].toLowerCase() !== 'grand total') {
+        months.push(r[0]);
+        closedVals.push(parseFloat(r[1])||0);
+        openVals.push(parseFloat(r[2])||0);
+      }
+    });
+  }
+  destroyChart('monthly');
+  chartInstances['monthly'] = new Chart(document.getElementById('chart-monthly'), {
+    type:'bar',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Closed',data:closedVals,backgroundColor:'#CBD5E0',borderRadius:4},
+        {label:'Open',data:openVals,backgroundColor:'#1E7E5A',borderRadius:4}
+      ]
+    },
+    options:{
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:1}}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      responsive:true, maintainAspectRatio:false
+    }
+  });
+
+  // ── HORIZONTAL BAR: Trade ──
+  const td = data.tradeSummary;
+  const tradeLabels=[], tradeCounts=[], tradeCosts=[];
+  if (td && td.rows) {
+    td.rows.forEach(r => {
+      if (r[0] && r[0].toLowerCase() !== 'grand total') {
+        tradeLabels.push(r[0]);
+        tradeCounts.push(parseFloat(r[1])||0);
+        const costStr = String(r[2]||'').replace(/[$,]/g,'');
+        tradeCosts.push(parseFloat(costStr)||0);
+      }
+    });
+  }
+  destroyChart('trade');
+  chartInstances['trade'] = new Chart(document.getElementById('chart-trade'), {
+    type:'bar',
+    data:{
+      labels:tradeLabels,
+      datasets:[{label:'Issues',data:tradeCounts,backgroundColor:'#2C5F8A',borderRadius:4}]
+    },
+    options:{
+      indexAxis:'y',
+      scales:{x:{beginAtZero:true,ticks:{stepSize:1},grid:{display:false}},y:{grid:{display:false}}},
+      plugins:{legend:{display:false}},
+      responsive:true, maintainAspectRatio:false
+    }
+  });
+  document.getElementById('chart-trade').style.height = Math.max(180, tradeLabels.length*36)+'px';
+
+  // ── HORIZONTAL BAR: Category ──
+  const cd = data.categorySummary;
+  const catLabels=[], catCounts=[], catCosts=[];
+  if (cd && cd.rows) {
+    cd.rows.forEach(r => {
+      if (r[0] && r[0].toLowerCase() !== 'grand total') {
+        catLabels.push(r[0]);
+        catCounts.push(parseFloat(r[1])||0);
+        const costStr = String(r[2]||'').replace(/[$,]/g,'');
+        catCosts.push(parseFloat(costStr)||0);
+      }
+    });
+  }
+  destroyChart('category');
+  chartInstances['category'] = new Chart(document.getElementById('chart-category'), {
+    type:'bar',
+    data:{
+      labels:catLabels,
+      datasets:[
+        {label:'Issues',data:catCounts,backgroundColor:'#E8A020',borderRadius:4},
+        {label:'Cost ($)',data:catCosts,backgroundColor:'rgba(192,57,43,0.7)',borderRadius:4,yAxisID:'y2'}
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      scales:{
+        x:{beginAtZero:true,ticks:{stepSize:1},grid:{display:false}},
+        y:{grid:{display:false}},
+        y2:{position:'right',beginAtZero:true,grid:{display:false},ticks:{callback:v=>'$'+v}}
+      },
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      responsive:true, maintainAspectRatio:false
+    }
+  });
+  document.getElementById('chart-category').style.height = Math.max(180, catLabels.length*36)+'px';
+
+  // ── TABLES ──
+  renderDashTable('table-trade', td);
+  renderDashTable('table-category', cd);
+}
+
+function renderDashTable(elId, tableData) {
+  if (!tableData || !tableData.headers || !tableData.rows) return;
+  const el = document.getElementById(elId);
+  el.innerHTML = '<table class="dash-table"><thead><tr>' +
+    tableData.headers.map(h=>`<th>${h}</th>`).join('') +
+    '</tr></thead><tbody>' +
+    tableData.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') +
+    '</tbody></table>';
 }
 
 // ── RESPONSE OTHER TOGGLE ──
