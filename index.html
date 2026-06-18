@@ -728,10 +728,10 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
   const btn=document.getElementById('submit-btn'),sp=document.getElementById('spinner');
   btn.disabled=true; document.getElementById('submit-text').textContent='Saving…'; sp.classList.add('active');
 
-  // Build file names for Drive naming: "YY-MM-DD - IssueName"
-  const issueText=document.getElementById('f-issue').value.trim().slice(0,40).replace(/[^a-zA-Z0-9 \-]/g,'');
+  // Build file names for Drive naming: "YY-MM-DD - Category"
+  const category=document.getElementById('f-area').value||'General';
   const datePrefix=sydneyDateOnly().slice(2); // YY-MM-DD
-  const driveName=`${datePrefix} - ${issueText}`;
+  const driveName=`${datePrefix} - ${category}`;
 
   let filesPayload=[];
   try {
