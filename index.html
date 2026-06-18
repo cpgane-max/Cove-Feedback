@@ -226,14 +226,26 @@
 
       <div class="section-label">Issue Identification</div>
       <div class="card">
-        <div class="grid-3">
+        <div class="grid-4">
           <div class="field">
-            <label for="f-date">Date / Time <span class="req">*</span></label>
-            <input type="datetime-local" id="f-date" required />
+            <label for="f-date">Date <span class="req">*</span></label>
+            <input type="date" id="f-date" required />
           </div>
           <div class="field">
             <label for="f-name">Resident Name <span class="req">*</span></label>
             <input type="text" id="f-name" placeholder="e.g. Jane Smith" required />
+          </div>
+          <div class="field">
+            <label for="f-unit">Unit Number <span class="req">*</span></label>
+            <select id="f-unit" required>
+              <option value="" disabled selected>Select unit…</option>
+              <option>G01</option><option>G02</option>
+              <option>101</option><option>102</option><option>103</option><option>104</option>
+              <option>201</option><option>202</option><option>203</option><option>204</option>
+              <option>301</option><option>302</option><option>303</option><option>304</option>
+              <option>401</option><option>402</option><option>403</option>
+              <option>501</option><option>502</option>
+            </select>
           </div>
           <div class="field">
             <label for="f-medium">How Logged <span class="req">*</span></label>
@@ -299,7 +311,7 @@
             <option>Cove Gardener</option><option>Electrician</option>
             <option>Handyman</option><option>Lift Tech</option>
             <option>Locksmith</option><option>Painter</option>
-            <option>Plumber</option><option>Other</option>
+            <option>Plumber</option><option>Strata Manager</option><option>Other</option>
           </select>
         </div>
         <div class="field">
@@ -320,7 +332,7 @@
           </div>
           <div class="field">
             <label for="f-resp-date">Response Date / Time</label>
-            <input type="datetime-local" id="f-resp-date" />
+            <input type="date" id="f-resp-date" />
           </div>
           <div class="field">
             <label for="f-resp-by">Responded By</label>
@@ -463,11 +475,23 @@
     <div class="grid-3">
       <div class="edit-field">
         <label>Date / Time</label>
-        <input type="datetime-local" id="edit-date" />
+        <input type="date" id="edit-date" />
       </div>
       <div class="edit-field">
         <label>Resident Name</label>
         <input type="text" id="edit-name" />
+      </div>
+      <div class="edit-field">
+        <label>Unit Number</label>
+        <select id="edit-unit">
+          <option value="">— Select unit —</option>
+          <option>G01</option><option>G02</option>
+          <option>101</option><option>102</option><option>103</option><option>104</option>
+          <option>201</option><option>202</option><option>203</option><option>204</option>
+          <option>301</option><option>302</option><option>303</option><option>304</option>
+          <option>401</option><option>402</option><option>403</option>
+          <option>501</option><option>502</option>
+        </select>
       </div>
       <div class="edit-field">
         <label>How Logged</label>
@@ -520,7 +544,7 @@
         <option>Cove Gardener</option><option>Electrician</option>
         <option>Handyman</option><option>Lift Tech</option>
         <option>Locksmith</option><option>Painter</option>
-        <option>Plumber</option><option>Other</option>
+        <option>Plumber</option><option>Strata Manager</option><option>Other</option>
       </select>
     </div>
     <div class="edit-field">
@@ -539,7 +563,7 @@
       </div>
       <div class="edit-field">
         <label>Response Date / Time</label>
-        <input type="datetime-local" id="edit-resp-date" />
+        <input type="date" id="edit-resp-date" />
       </div>
       <div class="edit-field">
         <label>Responded By</label>
@@ -615,7 +639,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQdaBygtPZ3DBLoK8l1FFiT04sbvbUBVu1OQY1Ft-vJjIlxQx_9OAD_s817bW90E3q/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzF0_VcAOjsLVOpCmaOYc8IyOf5hQ11uXCG4tu1zauHN3kN1CSzIOnuAy8fFu6SkArCNg/exec";
 const TZ = "Australia/Sydney";
 
 // ── SYDNEY TIME HELPERS ──
@@ -648,13 +672,13 @@ updateClock(); setInterval(updateClock,1000);
 
 // ── LOG PREVIEW ──
 function updateLogPreview() {
-  document.getElementById('log-preview').textContent = `${sydneyStr()} — Logged by: ${document.getElementById('f-logged-by').value||'(select name)'}`;
+  document.getElementById('log-preview').textContent = `${sydneyDateOnly()} — Logged by: ${document.getElementById('f-logged-by').value||'(select name)'}`;
 }
 document.getElementById('f-logged-by').addEventListener('change',updateLogPreview);
 updateLogPreview(); setInterval(updateLogPreview,30000);
 
 // ── DEFAULT DATE ──
-document.getElementById('f-date').value = sydneyDateLocal();
+document.getElementById('f-date').value = sydneyDateOnly();
 
 // ── STATUS TOGGLE ──
 document.getElementById('f-status').addEventListener('change',function(){
@@ -765,7 +789,7 @@ async function uploadFiles(files, rowRef) {
 // ── SUBMIT NEW ISSUE ──
 document.getElementById('issue-form').addEventListener('submit',async function(e){
   e.preventDefault();
-  const req=['f-date','f-name','f-medium','f-area','f-issue','f-logged-by'];
+  const req=['f-date','f-name','f-unit','f-medium','f-area','f-issue','f-logged-by'];
   let valid=true;
   req.forEach(id=>{const el=document.getElementById(id);if(!el.value.trim()){el.style.borderColor='#C0392B';valid=false;}else el.style.borderColor='';});
   if(!valid){showToast('Please fill in all required fields','error');return;}
@@ -796,16 +820,17 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
   const respOther=respHow==='Other'?document.getElementById('f-resp-other').value:'';
 
   const payload={
-    "Date/Time":            document.getElementById('f-date').value,
+    "Date":                 document.getElementById('f-date').value,
     "Originally Logged By": loggedBy,
     "Resident Name":        document.getElementById('f-name').value.trim(),
+    "Unit Number":          document.getElementById('f-unit').value,
     "How Logged":           document.getElementById('f-medium').value,
     "Category":     document.getElementById('f-area').value,
     "Issue":                document.getElementById('f-issue').value.trim(),
     "Trade Assigned":       document.getElementById('f-trade').value,
     "Action Taken":         document.getElementById('f-action').value.trim(),
     "Response How":         respHow+(respOther?' ('+respOther+')':''),
-    "Response Date/Time":   document.getElementById('f-resp-date').value,
+    "Response Date":        document.getElementById('f-resp-date').value,
     "Response By":          document.getElementById('f-resp-by').value.trim(),
     "Cost":                 cost,
     "Status":               document.getElementById('f-status').checked?'Open':'Closed',
@@ -832,11 +857,11 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
 function resetForm(){
   document.getElementById('issue-form').reset();
   uploadedFiles=[];renderFileList();
-  document.getElementById('f-date').value=sydneyDateLocal();
+  document.getElementById('f-date').value=sydneyDateOnly();
   document.getElementById('status-label').textContent='OPEN';
   document.getElementById('status-label').className='toggle-label open';
   document.getElementById('f-resp-other-wrap').style.display='none';
-  ['f-date','f-name','f-medium','f-area','f-issue','f-logged-by'].forEach(id=>document.getElementById(id).style.borderColor='');
+  ['f-date','f-name','f-unit','f-medium','f-area','f-issue','f-logged-by'].forEach(id=>document.getElementById(id).style.borderColor='');
   updateLogPreview();
 }
 
@@ -879,7 +904,7 @@ function renderCalendar(){
   document.getElementById('cal-title').textContent=`${months[calMonth]} ${calYear}`;
   const counts={}, closedDates=new Set();
   (allIssues||[]).forEach(issue=>{
-    const ds=toDateStr(issue['Date/Time']);
+    const ds=toDateStr(issue['Date']);
     if(ds){
       counts[ds]=(counts[ds]||0)+1;
       if(issue['Status']==='Closed') closedDates.add(ds);
@@ -993,7 +1018,7 @@ function renderIssueList(elId,issues){
   const el=document.getElementById(elId);
   if(!issues.length){el.innerHTML='<div class="issues-empty">No issues found.</div>';return;}
   el.innerHTML=issues.map(issue=>{
-    const dt=issue['Date/Time']?new Date(issue['Date/Time']):null;
+    const dt=issue['Date']?new Date(issue['Date']+'T12:00:00'):null;
     const dtStr=dt&&!isNaN(dt)?dt.toLocaleDateString('en-AU',{timeZone:TZ,day:'numeric',month:'short',year:'numeric'}):(issue['Date/Time']||'–');
     const status=issue['Status']||'Open';
     const isClosed=status==='Closed';
@@ -1003,7 +1028,7 @@ function renderIssueList(elId,issues){
         <div class="status-pill ${isClosed?'closed':'open'}">${status.toUpperCase()}</div>
       </div>
       <div class="issue-card-body">
-        <div class="issue-card-name">${issue['Resident Name']||'(unknown)'}</div>
+        <div class="issue-card-name">${issue['Resident Name']||'(unknown)'}${issue['Unit Number']?' · Unit '+issue['Unit Number']:''}</div>
         ${issue['Category']?`<div class="issue-card-area">📍 ${issue['Category']}</div>`:''}
         <div class="issue-card-issue">${issue['Issue']||''}</div>
         <div class="issue-card-meta">
@@ -1026,9 +1051,10 @@ function openEditModal(rowIndex){
   document.getElementById('edit-row').value=rowIndex;
   document.getElementById('edit-modal-title').textContent=`Edit Issue — ${issue['Resident Name']||'Row '+rowIndex}`;
   let dtVal='';
-  if(issue['Date/Time']){const d=new Date(issue['Date/Time']);if(!isNaN(d))dtVal=sydneyDateLocal(d);else dtVal=issue['Date/Time'];}
+  if(issue['Date']){const d=new Date(issue['Date']);if(!isNaN(d))dtVal=sydneyDateOnly(d);else dtVal=issue['Date'];}
   document.getElementById('edit-date').value=dtVal;
   document.getElementById('edit-name').value=issue['Resident Name']||'';
+  document.getElementById('edit-unit').value=issue['Unit Number']||'';
   document.getElementById('edit-medium').value=issue['How Logged']||'In Person';
   document.getElementById('edit-orig-logged-by').value=issue['Originally Logged By']||issue['Logged By']||'';
   const isOpen=(issue['Status']||'Open')!=='Closed';
@@ -1042,7 +1068,7 @@ function openEditModal(rowIndex){
   document.getElementById('edit-resp-how').value=issue['Response How']||'';
   toggleRespOther(document.getElementById('edit-resp-how'),'edit-resp-other-wrap');
   let respDate='';
-  if(issue['Response Date/Time']){const d=new Date(issue['Response Date/Time']);if(!isNaN(d))respDate=sydneyDateLocal(d);}
+  if(issue['Response Date']){const d=new Date(issue['Response Date']);if(!isNaN(d))respDate=sydneyDateOnly(d);}
   document.getElementById('edit-resp-date').value=respDate;
   document.getElementById('edit-resp-by').value=issue['Response By']||'';
   document.getElementById('edit-cost').value=(issue['Cost']||'').replace('$','');
@@ -1091,16 +1117,17 @@ async function saveEdit(){
 
   const payload={
     action:"update",rowIndex:parseInt(rowIndex),
-    "Date/Time":            document.getElementById('edit-date').value,
+    "Date":                 document.getElementById('edit-date').value,
     "Originally Logged By": document.getElementById('edit-orig-logged-by').value,
     "Resident Name":        document.getElementById('edit-name').value.trim(),
+    "Unit Number":          document.getElementById('edit-unit').value,
     "How Logged":           document.getElementById('edit-medium').value,
     "Category":     document.getElementById('edit-area').value,
     "Issue":                document.getElementById('edit-issue').value.trim(),
     "Trade Assigned":       document.getElementById('edit-trade').value,
     "Action Taken":         document.getElementById('edit-action').value.trim(),
     "Response How":         respHow+(respOther?' ('+respOther+')':''),
-    "Response Date/Time":   document.getElementById('edit-resp-date').value,
+    "Response Date":        document.getElementById('edit-resp-date').value,
     "Response By":          document.getElementById('edit-resp-by').value.trim(),
     "Cost":                 cost,
     "Media":                document.getElementById('edit-media').value.trim(),
