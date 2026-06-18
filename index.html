@@ -589,7 +589,7 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOZ2zmw3x4VZQNyGNV4YhO5U0NqCzR1xcXmKaq6I1Sldl8K-tXLLMY58NM0ftsNx0pOA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPVbYaAsDpK9pXmxuvn-d89JKmiTbhk0uIDRVPmIAgTtn3iaWVc7BqdGleTjbKGNmBeA/exec";
 const TZ = "Australia/Sydney";
 
 // ── SYDNEY TIME HELPERS ──
@@ -687,13 +687,31 @@ function readFileAsBase64(file) {
   });
 });
 
-// ── SUBMIT TO GOOGLE (GET-based, CORS-safe) ──
-async function submitToGoogle(payload) {
-  const dataPayload=Object.assign({},payload,{files:[]});
-  const url=SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(dataPayload));
-  const resp=await fetch(url,{method:'GET'});
-  if(!resp.ok) throw new Error('HTTP '+resp.status);
+// ── SUBMIT DATA via GET (CORS-safe, no files) ──
+async function submitData(payload) {
+  const dataPayload = Object.assign({}, payload, {files: []});
+  const url = SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(dataPayload));
+  const resp = await fetch(url, {method: 'GET'});
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
   return resp.json();
+}
+
+// ── UPLOAD FILES via POST (separate request) ──
+async function uploadFiles(files, rowRef) {
+  if (!files || files.length === 0) return;
+  const payload = {
+    action: 'filesOnly',
+    rowRef: rowRef,   // "new" for new rows, rowIndex number for edits
+    files: files
+  };
+  // POST with no-cors — Drive upload works server-side regardless
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'payload=' + encodeURIComponent(JSON.stringify(payload))
+  });
+  // Fire and forget — Drive upload happens async
 }
 
 // ── SUBMIT NEW ISSUE ──
@@ -749,8 +767,14 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
   };
 
   try {
-    await submitToGoogle(payload);
-    showToast('✓ Issue logged!'+(filesPayload.length?' Files saved to Drive.':''),'success');
+    const result = await submitData(payload);
+    // After row is written, upload files separately (async, fire & forget)
+    if (filesPayload.length > 0) {
+      uploadFiles(filesPayload, 'new');
+      showToast('✓ Issue logged! Files uploading to Drive…', 'success');
+    } else {
+      showToast('✓ Issue logged!', 'success');
+    }
     resetForm(); allIssues=null;
   } catch(err){showToast('Error: '+err.message,'error');}
   finally{btn.disabled=false;document.getElementById('submit-text').textContent='Log Issue to Google Sheet';sp.classList.remove('active');}
@@ -1010,8 +1034,13 @@ async function saveEdit(){
     "files":[]
   };
   try{
-    await submitToGoogle(payload);
-    showToast('✓ Issue updated!','success');
+    await submitData(payload);
+    if (editFiles && editFiles.length > 0) {
+      uploadFiles(editFiles, parseInt(rowIndex));
+      showToast('✓ Issue updated! Files uploading to Drive…','success');
+    } else {
+      showToast('✓ Issue updated!','success');
+    }
     closeEditModal(); allIssues=null; loadIssues();
   }catch(err){showToast('Error saving: '+err.message,'error');}
   finally{btn.disabled=false;document.getElementById('edit-save-text').textContent='Save Changes';sp.classList.remove('active');}
