@@ -272,7 +272,7 @@
       <div class="section-label">Issue Detail</div>
       <div class="card amber">
         <div class="field">
-          <label for="f-area">Area of Building <span class="req">*</span></label>
+          <label for="f-area">Category <span class="req">*</span></label>
           <select id="f-area" required>
             <option value="" disabled selected>Select area…</option>
             <option>Common Area</option><option>Door</option><option>Electrical</option>
@@ -489,7 +489,7 @@
 
     <div class="modal-section">Issue Detail</div>
     <div class="edit-field">
-      <label>Area of Building</label>
+      <label>Category</label>
       <select id="edit-area">
         <option value="">— Select —</option>
         <option>Common Area</option><option>Door</option><option>Electrical</option>
@@ -734,7 +734,7 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
     "Originally Logged By": loggedBy,
     "Resident Name":        document.getElementById('f-name').value.trim(),
     "How Logged":           document.getElementById('f-medium').value,
-    "Area of Building":     document.getElementById('f-area').value,
+    "Category":     document.getElementById('f-area').value,
     "Issue":                document.getElementById('f-issue').value.trim(),
     "Trade Assigned":       document.getElementById('f-trade').value,
     "Action Taken":         document.getElementById('f-action').value.trim(),
@@ -894,7 +894,7 @@ function getFilteredIssues(){
   if(search) issues=issues.filter(i=>
     (i['Resident Name']||'').toLowerCase().includes(search)||
     (i['Issue']||'').toLowerCase().includes(search)||
-    (i['Area of Building']||'').toLowerCase().includes(search)||
+    (i['Category']||'').toLowerCase().includes(search)||
     (i['Trade Assigned']||'').toLowerCase().includes(search)
   );
   return issues;
@@ -931,7 +931,7 @@ function renderIssueList(elId,issues){
       </div>
       <div class="issue-card-body">
         <div class="issue-card-name">${issue['Resident Name']||'(unknown)'}</div>
-        ${issue['Area of Building']?`<div class="issue-card-area">📍 ${issue['Area of Building']}</div>`:''}
+        ${issue['Category']?`<div class="issue-card-area">📍 ${issue['Category']}</div>`:''}
         <div class="issue-card-issue">${issue['Issue']||''}</div>
         <div class="issue-card-meta">
           ${issue['Trade Assigned']?'🔧 '+issue['Trade Assigned']+' · ':''}
@@ -962,7 +962,7 @@ function openEditModal(rowIndex){
   document.getElementById('edit-status').checked=isOpen;
   document.getElementById('edit-status-label').textContent=isOpen?'OPEN':'CLOSED';
   document.getElementById('edit-status-label').className='toggle-label '+(isOpen?'open':'closed');
-  document.getElementById('edit-area').value=issue['Area of Building']||'';
+  document.getElementById('edit-area').value=issue['Category']||'';
   document.getElementById('edit-issue').value=issue['Issue']||'';
   document.getElementById('edit-trade').value=issue['Trade Assigned']||'';
   document.getElementById('edit-action').value=issue['Action Taken']||'';
@@ -995,7 +995,7 @@ async function saveEdit(){
     "Originally Logged By": document.getElementById('edit-orig-logged-by').value,
     "Resident Name":        document.getElementById('edit-name').value.trim(),
     "How Logged":           document.getElementById('edit-medium').value,
-    "Area of Building":     document.getElementById('edit-area').value,
+    "Category":     document.getElementById('edit-area').value,
     "Issue":                document.getElementById('edit-issue').value.trim(),
     "Trade Assigned":       document.getElementById('edit-trade').value,
     "Action Taken":         document.getElementById('edit-action').value.trim(),
