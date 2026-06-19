@@ -583,7 +583,7 @@
       <div class="grid-3">
         <div class="field">
           <label for="qt-date">Quote Date <span class="req">*</span></label>
-          <input type="text" id="qt-date" placeholder="e.g. 15/06/2025" />
+          <input type="date" id="qt-date" />
         </div>
         <div class="field">
           <label for="qt-trade">Trade <span class="req">*</span></label>
@@ -1737,14 +1737,22 @@ async function loadMinutes() {
   } catch(e) { minutesData=[]; }
   renderMinutesList();
 }
-function renderMinutesList() {
+function formatShortDate(val) {
+  if (!val) return '–';
+  const d = new Date(val);
+  if (isNaN(d)) return val;
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yy = String(d.getFullYear()).slice(2);
+  return dd+'-'+mm+'-'+yy;
+}
   const el=document.getElementById('mm-list');
   if (!minutesData||minutesData.length===0) { el.innerHTML='<div class="issues-empty">No meeting minutes uploaded yet.</div>'; return; }
   el.innerHTML=minutesData.slice().reverse().map(m=>{
     const files=(m['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
     return `<div class="issue-card" style="cursor:default">
       <div>
-        <div class="issue-card-badge">${m['Meeting Date']||'–'}</div>
+        <div class="issue-card-badge">${formatShortDate(m['Meeting Date'])}</div>
       </div>
       <div class="issue-card-body">
         <div class="issue-card-name">${m['Meeting Name']||'(unnamed)'}</div>
@@ -1781,9 +1789,8 @@ async function submitQuote() {
   const cost='$'+parseFloat(costRaw.replace(/[^0-9.]/g,'')).toFixed(2);
   const btn=document.getElementById('qt-submit-btn'), sp=document.getElementById('qt-spinner');
   btn.disabled=true; document.getElementById('qt-submit-text').textContent='Saving…'; sp.classList.add('active');
-  // Drive name: "YY-MM-DD - Company - Quote Name" using quote date
-  // Parse date: try DD/MM/YYYY or YYYY-MM-DD
-  let yy=''; try { const au=date.match(/(\d{2})\/(\d{2})\/(\d{4})/); if(au){yy=au[3].slice(2)+'-'+au[2]+'-'+au[1];}else{const iso=date.match(/(\d{4})-(\d{2})-(\d{2})/);if(iso)yy=iso[1].slice(2)+'-'+iso[2]+'-'+iso[3];} } catch(e){}
+  // Parse YYYY-MM-DD from date picker -> YY-MM-DD for Drive filename
+  let yy=''; try { const iso=date.match(/(\d{4})-(\d{2})-(\d{2})/); if(iso) yy=iso[1].slice(2)+'-'+iso[2]+'-'+iso[3]; } catch(e){}
   const driveName=`${yy} - ${company} - ${name}`;
   let filePayload=null;
   if (qtFile) {
@@ -1834,7 +1841,7 @@ function renderQuotesList() {
     const files=(q['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
     return `<div class="issue-card" style="cursor:default">
       <div>
-        <div class="issue-card-badge">${q['Quote Date']||'–'}</div>
+        <div class="issue-card-badge">${formatShortDate(q['Quote Date'])}</div>
         <span style="font-size:.72rem;font-weight:700;color:${statusColor};display:block;margin-top:4px;text-align:center">${status.toUpperCase()}</span>
       </div>
       <div class="issue-card-body">
