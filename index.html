@@ -30,7 +30,8 @@
       z-index:0;
       pointer-events:none;
     }
-    main, .tab-bar { position:relative; z-index:1; }
+    main { position:relative; z-index:1; }
+    .tab-bar { position:sticky; top:64px; z-index:99; }
 
     /* HEADER */
     header { background:var(--blue-dark);color:white;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25); }
@@ -233,6 +234,8 @@
     <button class="tab-btn active" onclick="switchTab('log')">📋 Log New Issue</button>
     <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar &amp; Issues</button>
     <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('minutes')">📄 Meeting Minutes</button>
+    <button class="tab-btn" onclick="switchTab('quotes')">💰 Quotes</button>
   </div>
 </div>
 
@@ -349,7 +352,7 @@
             </select>
           </div>
           <div class="field">
-            <label for="f-resp-date">Response Date / Time</label>
+            <label for="f-resp-date">Response Date</label>
             <input type="date" id="f-resp-date" />
           </div>
           <div class="field">
@@ -538,6 +541,94 @@
 
     </div>
   </div>
+  <!-- ══ MEETING MINUTES TAB ══ -->
+  <div class="tab-panel" id="tab-minutes">
+    <div class="section-label">Upload Meeting Minutes</div>
+    <div class="card">
+      <div class="grid-3">
+        <div class="field">
+          <label for="mm-date">Meeting Date <span class="req">*</span></label>
+          <input type="date" id="mm-date" />
+        </div>
+        <div class="field">
+          <label for="mm-name">Meeting Name <span class="req">*</span></label>
+          <input type="text" id="mm-name" placeholder="e.g. AGM 2025, Committee Meeting" />
+        </div>
+        <div class="field" style="align-self:end">
+          <label>Files <span class="req">*</span></label>
+          <input type="file" id="mm-file" multiple accept=".pdf,.doc,.docx,image/*" onchange="handleMmFiles(this.files);this.value=''" style="display:none" />
+          <button type="button" onclick="document.getElementById('mm-file').click()" style="padding:9px 16px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;width:100%">📁 Choose Files</button>
+        </div>
+      </div>
+      <div id="mm-file-list" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div style="margin-top:1rem;display:flex;gap:10px">
+        <button type="button" id="mm-submit-btn" onclick="submitMinutes()" class="btn-primary"><span>📄</span> <span id="mm-submit-text">Upload Minutes</span><div class="spinner" id="mm-spinner"></div></button>
+        <button type="button" class="btn-secondary" onclick="resetMinutes()">Clear</button>
+      </div>
+    </div>
+
+    <div class="section-label">Uploaded Minutes</div>
+    <div id="mm-list"><div class="issues-empty">Loading…</div></div>
+  </div>
+
+  <!-- ══ QUOTES TAB ══ -->
+  <div class="tab-panel" id="tab-quotes">
+    <div id="quotes-summary" style="background:rgba(255,255,255,0.92);border:1px solid rgba(255,255,255,0.6);border-radius:12px;padding:1.2rem 1.6rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:.85rem;font-weight:600;color:var(--slate)">Total Approved Quotes</span>
+      <span id="quotes-approved-total" style="font-size:1.4rem;font-weight:700;color:var(--green)">$0.00</span>
+    </div>
+
+    <div class="section-label">Add New Quote</div>
+    <div class="card">
+      <div class="grid-3">
+        <div class="field">
+          <label for="qt-date">Quote Date <span class="req">*</span></label>
+          <input type="text" id="qt-date" placeholder="e.g. 15/06/2025" />
+        </div>
+        <div class="field">
+          <label for="qt-trade">Trade <span class="req">*</span></label>
+          <select id="qt-trade">
+            <option value="">— Select trade —</option>
+            <option>Building Manager</option><option>Carpenter/Builder</option>
+            <option>Cleaner</option><option>Committee Member</option>
+            <option>Cove Gardener</option><option>Electrician</option>
+            <option>Handyman</option><option>Lift Tech</option>
+            <option>Locksmith</option><option>Painter</option>
+            <option>Plumber</option><option>Strata Manager</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="qt-name">Quote Name <span class="req">*</span></label>
+          <input type="text" id="qt-name" placeholder="Brief description of work" />
+        </div>
+        <div class="field">
+          <label for="qt-company">Company <span class="req">*</span></label>
+          <input type="text" id="qt-company" placeholder="e.g. ABC Plumbing" />
+        </div>
+        <div class="field">
+          <label for="qt-cost">Cost (AUD) <span class="req">*</span></label>
+          <div class="currency-wrap">
+            <span>$</span>
+            <input type="text" id="qt-cost" placeholder="0.00" inputmode="decimal" />
+          </div>
+        </div>
+        <div class="field" style="align-self:end">
+          <label>Document</label>
+          <input type="file" id="qt-file" accept=".pdf,.doc,.docx,image/*" onchange="handleQtFile(this.files);this.value=''" style="display:none" />
+          <button type="button" onclick="document.getElementById('qt-file').click()" style="padding:9px 16px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;width:100%">📁 Choose File</button>
+        </div>
+      </div>
+      <div id="qt-file-chip" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div style="margin-top:1rem;display:flex;gap:10px">
+        <button type="button" id="qt-submit-btn" onclick="submitQuote()" class="btn-primary"><span>💰</span> <span id="qt-submit-text">Save Quote</span><div class="spinner" id="qt-spinner"></div></button>
+        <button type="button" class="btn-secondary" onclick="resetQuote()">Clear</button>
+      </div>
+    </div>
+
+    <div class="section-label">All Quotes</div>
+    <div id="qt-list"><div class="issues-empty">Loading…</div></div>
+  </div>
+
 </main>
 
 <div id="toast"></div>
@@ -642,7 +733,7 @@
         </select>
       </div>
       <div class="edit-field">
-        <label>Response Date / Time</label>
+        <label>Response Date</label>
         <input type="date" id="edit-resp-date" />
       </div>
       <div class="edit-field">
@@ -726,7 +817,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNTBqZ2bjAroze1W5iGFIBt1TgPO0dqwHShgBmIirnXnntXJTBEAN5Nj7alZw24YjmHg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrQjJMcc4fUb5Z0zvTRo8Lik4i1mQKa7s0Om8WU7pDHvkkbIPEIFYrL4ITHzHXHdrOOg/exec";
 
 // ── PASSWORD PROTECTION ──
 const SESSION_KEY = 'cove_auth';
@@ -801,11 +892,14 @@ document.getElementById('edit-status').addEventListener('change',function(){
 
 // ── TABS ──
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['log','calendar','dashboard'][i]===tab));
+  const tabs = ['log','calendar','dashboard','minutes','quotes'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='calendar') loadIssues();
   if(tab==='dashboard'){ dashLoaded=false; loadDashboard(); }
+  if(tab==='minutes') loadMinutes();
+  if(tab==='quotes') loadQuotes();
 }
 
 // ══════════════════════════════
@@ -1130,12 +1224,13 @@ async function submitData(payload) {
 }
 
 // ── UPLOAD FILES — chunked POST, one file at a time ──
-async function uploadFiles(files, rowRef) {
+async function uploadFiles(files, rowRef, sheetName) {
   if (!files || files.length === 0) return;
   for (const file of files) {
     const payload = {
       action: 'filesOnly',
       rowRef: rowRef,
+      sheetName: sheetName || '',
       files: [file]
     };
     const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
@@ -1194,7 +1289,7 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
 
   const now=sydneyStr();
   const loggedBy=document.getElementById('f-logged-by').value;
-  const respHow=document.getElementById('f-resp-how').value;
+  const respHow=document.getElementById('f-resp-how').value||'';
   const respOther=respHow==='Other'?document.getElementById('f-resp-other').value:'';
 
   const payload={
@@ -1208,8 +1303,8 @@ document.getElementById('issue-form').addEventListener('submit',async function(e
     "Trade Assigned":       document.getElementById('f-trade').value,
     "Action Taken":         document.getElementById('f-action').value.trim(),
     "Response How":         respHow+(respOther?' ('+respOther+')':''),
-    "Response Date":        document.getElementById('f-resp-date').value,
-    "Response By":          document.getElementById('f-resp-by').value.trim(),
+    "Response Date":        document.getElementById('f-resp-date').value||'',
+    "Response By":          document.getElementById('f-resp-by').value||'',
     "Cost":                 cost,
     "Status":               document.getElementById('f-status').checked?'Open':'Closed',
     "Last Updated":         now,
@@ -1578,6 +1673,188 @@ let toastTimer;
 function showToast(msg,type){
   const t=document.getElementById('toast');t.className=type;t.textContent=msg;
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.className='';t.style.display='none';},5000);
+}
+
+
+// ══════════════════════════════
+// MEETING MINUTES
+// ══════════════════════════════
+let mmFiles = [], minutesData = null;
+
+function handleMmFiles(files) {
+  for (const f of files) if (!mmFiles.find(x=>x.name===f.name)) mmFiles.push(f);
+  renderMmFileList();
+}
+function renderMmFileList() {
+  const el = document.getElementById('mm-file-list');
+  el.innerHTML = mmFiles.map(f=>`<div class="file-chip">📄 ${f.name}<button onclick="mmFiles=mmFiles.filter(x=>x.name!==JSON.stringify('${f.name}').slice(1,-1));renderMmFileList()" title="Remove">×</button></div>`).join('');
+}
+function resetMinutes() {
+  document.getElementById('mm-date').value='';
+  document.getElementById('mm-name').value='';
+  mmFiles=[];
+  renderMmFileList();
+}
+async function submitMinutes() {
+  const date = document.getElementById('mm-date').value;
+  const name = document.getElementById('mm-name').value.trim();
+  if (!date||!name) { showToast('Please enter meeting date and name','error'); return; }
+  if (mmFiles.length===0) { showToast('Please attach at least one file','error'); return; }
+  const btn=document.getElementById('mm-submit-btn'), sp=document.getElementById('mm-spinner');
+  btn.disabled=true; document.getElementById('mm-submit-text').textContent='Uploading…'; sp.classList.add('active');
+  // Drive file name: "YY-MM-DD - Meeting Name"
+  const yy=date.slice(2); // YYYY-MM-DD -> YY-MM-DD
+  const driveName=`${yy} - ${name}`;
+  let filesPayload=[];
+  try {
+    filesPayload=await Promise.all(mmFiles.map(async f=>({
+      name: driveName+(mmFiles.length>1?'_'+f.name:'.'+(f.name.split('.').pop()||'pdf')),
+      mimeType:f.type||'application/octet-stream',
+      data:await readFileAsBase64(f)
+    })));
+  } catch(e) { showToast('Error reading files','error'); btn.disabled=false; document.getElementById('mm-submit-text').textContent='Upload Minutes'; sp.classList.remove('active'); return; }
+  const payload = { action:'minutesNew', meetingDate:date, meetingName:name, files:filesPayload };
+  try {
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify({...payload,files:[]}));
+    const r = await fetch(url);
+    const res = await r.json();
+    const rowIdx = res.rowIndex||'new';
+    if (filesPayload.length>0) {
+      await uploadFiles(filesPayload, rowIdx, 'Meeting Minutes');
+    }
+    showToast('✓ Minutes uploaded!','success');
+    resetMinutes(); minutesData=null; loadMinutes();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { btn.disabled=false; document.getElementById('mm-submit-text').textContent='Upload Minutes'; sp.classList.remove('active'); }
+}
+async function loadMinutes() {
+  if (minutesData!==null) { renderMinutesList(); return; }
+  document.getElementById('mm-list').innerHTML='<div class="issues-empty">Loading…</div>';
+  try {
+    const r=await fetch(SCRIPT_URL+'?minutes=1&t='+Date.now());
+    minutesData=await r.json();
+    if (!Array.isArray(minutesData)) minutesData=[];
+  } catch(e) { minutesData=[]; }
+  renderMinutesList();
+}
+function renderMinutesList() {
+  const el=document.getElementById('mm-list');
+  if (!minutesData||minutesData.length===0) { el.innerHTML='<div class="issues-empty">No meeting minutes uploaded yet.</div>'; return; }
+  el.innerHTML=minutesData.slice().reverse().map(m=>{
+    const files=(m['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
+    return `<div class="issue-card" style="cursor:default">
+      <div>
+        <div class="issue-card-badge">${m['Meeting Date']||'–'}</div>
+      </div>
+      <div class="issue-card-body">
+        <div class="issue-card-name">${m['Meeting Name']||'(unnamed)'}</div>
+        <div class="issue-card-meta">${files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join(' &nbsp;')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════
+// QUOTES
+// ══════════════════════════════
+let qtFile=null, quotesData=null;
+
+function handleQtFile(files) {
+  if (files.length>0) {
+    qtFile=files[0];
+    document.getElementById('qt-file-chip').innerHTML=`<div class="file-chip">📄 ${qtFile.name}<button onclick="qtFile=null;document.getElementById('qt-file-chip').innerHTML=''" title="Remove">×</button></div>`;
+  }
+}
+function resetQuote() {
+  ['qt-date','qt-name','qt-company','qt-cost'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('qt-trade').value='';
+  qtFile=null;
+  document.getElementById('qt-file-chip').innerHTML='';
+}
+async function submitQuote() {
+  const date=document.getElementById('qt-date').value.trim();
+  const trade=document.getElementById('qt-trade').value;
+  const name=document.getElementById('qt-name').value.trim();
+  const company=document.getElementById('qt-company').value.trim();
+  const costRaw=document.getElementById('qt-cost').value.trim();
+  if (!date||!trade||!name||!company||!costRaw) { showToast('Please fill in all required fields','error'); return; }
+  const cost='$'+parseFloat(costRaw.replace(/[^0-9.]/g,'')).toFixed(2);
+  const btn=document.getElementById('qt-submit-btn'), sp=document.getElementById('qt-spinner');
+  btn.disabled=true; document.getElementById('qt-submit-text').textContent='Saving…'; sp.classList.add('active');
+  // Drive name: "YY-MM-DD - Company - Quote Name" using quote date
+  // Parse date: try DD/MM/YYYY or YYYY-MM-DD
+  let yy=''; try { const au=date.match(/(\d{2})\/(\d{2})\/(\d{4})/); if(au){yy=au[3].slice(2)+'-'+au[2]+'-'+au[1];}else{const iso=date.match(/(\d{4})-(\d{2})-(\d{2})/);if(iso)yy=iso[1].slice(2)+'-'+iso[2]+'-'+iso[3];} } catch(e){}
+  const driveName=`${yy} - ${company} - ${name}`;
+  let filePayload=null;
+  if (qtFile) {
+    try { filePayload={name:driveName+'.'+(qtFile.name.split('.').pop()||'pdf'),mimeType:qtFile.type||'application/octet-stream',data:await readFileAsBase64(qtFile)}; } catch(e){showToast('Error reading file','error'); btn.disabled=false; document.getElementById('qt-submit-text').textContent='Save Quote'; sp.classList.remove('active'); return;}
+  }
+  const payload={action:'quoteNew',quoteDate:date,trade,quoteName:name,company,cost,status:'Pending',files:[]};
+  try {
+    const url=SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    const r=await fetch(url); const res=await r.json();
+    const rowIdx=res.rowIndex||'new';
+    if (filePayload) {
+      await uploadFiles([filePayload], rowIdx, 'Quotes');
+    }
+    showToast('✓ Quote saved!','success');
+    resetQuote(); quotesData=null; loadQuotes();
+  } catch(e){ showToast('Error: '+e.message,'error'); }
+  finally { btn.disabled=false; document.getElementById('qt-submit-text').textContent='Save Quote'; sp.classList.remove('active'); }
+}
+async function loadQuotes() {
+  if (quotesData!==null) { renderQuotesList(); return; }
+  document.getElementById('qt-list').innerHTML='<div class="issues-empty">Loading…</div>';
+  try {
+    const r=await fetch(SCRIPT_URL+'?quotes=1&t='+Date.now());
+    quotesData=await r.json();
+    if (!Array.isArray(quotesData)) quotesData=[];
+  } catch(e) { quotesData=[]; }
+  renderQuotesList();
+}
+async function toggleQuoteStatus(rowIndex, currentStatus) {
+  const newStatus=currentStatus==='Approved'?'Rejected':(currentStatus==='Rejected'?'Approved':'Approved');
+  const payload={action:'quoteUpdate',rowIndex,status:newStatus};
+  try {
+    const url=SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    await fetch(url);
+    const q=quotesData.find(x=>x.rowIndex==rowIndex);
+    if(q) q['Status']=newStatus;
+    renderQuotesList();
+  } catch(e){ showToast('Error updating status','error'); }
+}
+function renderQuotesList() {
+  const el=document.getElementById('qt-list');
+  if (!quotesData||quotesData.length===0) { el.innerHTML='<div class="issues-empty">No quotes saved yet.</div>'; updateApprovedTotal(); return; }
+  updateApprovedTotal();
+  el.innerHTML=quotesData.slice().reverse().map(q=>{
+    const status=q['Status']||'Pending';
+    const isApproved=status==='Approved', isRejected=status==='Rejected';
+    const statusColor=isApproved?'var(--green)':isRejected?'var(--red)':'var(--amber)';
+    const files=(q['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
+    return `<div class="issue-card" style="cursor:default">
+      <div>
+        <div class="issue-card-badge">${q['Quote Date']||'–'}</div>
+        <span style="font-size:.72rem;font-weight:700;color:${statusColor};display:block;margin-top:4px;text-align:center">${status.toUpperCase()}</span>
+      </div>
+      <div class="issue-card-body">
+        <div class="issue-card-name">${q['Quote Name']||'(unnamed)'} · ${q['Company']||''}</div>
+        <div class="issue-card-area">🔧 ${q['Trade']||''}</div>
+        <div class="issue-card-meta">
+          <strong style="color:var(--blue-dark)">${q['Cost']||'–'}</strong>
+          ${files.map((u,i)=>`&nbsp;<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;min-width:110px">
+        <button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:6px 14px;border:none;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;background:${isApproved?'var(--green)':isRejected?'var(--red)':'#888'};color:white">${isApproved?'✓ Approved':isRejected?'✗ Rejected':'Pending'}</button>
+        <span style="font-size:.65rem;color:var(--slate-light);text-align:right">tap to toggle</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+function updateApprovedTotal() {
+  const total=(quotesData||[]).filter(q=>(q['Status']||'')=='Approved').reduce((s,q)=>s+parseCost(q['Cost']),0);
+  document.getElementById('quotes-approved-total').textContent=fmtCurrency(total);
 }
 
 initCalendar();
