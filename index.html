@@ -726,7 +726,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvIwj8eivJuPYnMuCVi132qypdG_Su823pqiEDE4PYpDH9wCxQOMtFRMeREoT9sc6o2Q/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNTBqZ2bjAroze1W5iGFIBt1TgPO0dqwHShgBmIirnXnntXJTBEAN5Nj7alZw24YjmHg/exec";
 
 // ── PASSWORD PROTECTION ──
 const SESSION_KEY = 'cove_auth';
@@ -875,21 +875,13 @@ function renderDashboard(data) {
   ).join('');
 
   // ── STACKED BAR: Monthly ──
-  // The pivot has 2 header rows: row 0 = "Issues Per Month / Status"
-  // row 1 = "Date - Month / Closed / Open / Grand Total"
-  // So actual data rows start at index 2 (skip first 2 rows)
+  // Headers: Date-Month, Closed, Open, Grand Total
   const md = data.monthlyDetail;
   const months=[], closedVals=[], openVals=[];
   if (md && md.rows) {
-    // Skip header-like rows — skip any row where first cell looks like a header
-    let dataStarted = false;
     md.rows.forEach(r => {
       const label = String(r[0]||'').trim();
-      if (!label || label.toLowerCase() === 'grand total') return;
-      // Skip rows that look like sub-headers (no numeric data in col 1)
-      const val1 = parseFloat(String(r[1]||'').replace(/[$,]/g,''));
-      if (isNaN(val1) && !dataStarted) return; // skip header rows
-      dataStarted = true;
+      if (!label || label.toLowerCase().includes('grand total') || label.toLowerCase().includes('date')) return;
       months.push(label);
       closedVals.push(parseFloat(r[1])||0);
       openVals.push(parseFloat(r[2])||0);
@@ -921,10 +913,11 @@ function renderDashboard(data) {
   if (td && td.rows) {
     td.rows.forEach(r => {
       const label = String(r[0]||'').trim();
-      if (!label || label.toLowerCase() === 'grand total') return;
       const count = parseFloat(r[1])||0;
-      if (isNaN(parseFloat(r[1])) && tradeCounts.length === 0) return; // skip header rows
-      tradeLabels.push(label);
+      if (label.toLowerCase().includes('grand total')) return;
+      if (label.toLowerCase().includes('trade assigned')) return; // skip header row
+      // Blank trade label = "(Not Assigned)"
+      tradeLabels.push(label || '(Not Assigned)');
       tradeCounts.push(count);
     });
   }
@@ -954,8 +947,7 @@ function renderDashboard(data) {
   if (cd && cd.rows) {
     cd.rows.forEach(r => {
       const label = String(r[0]||'').trim();
-      if (!label || label.toLowerCase() === 'grand total') return;
-      if (isNaN(parseFloat(r[1])) && catCounts.length === 0) return; // skip header rows
+      if (!label || label.toLowerCase().includes('grand total') || label.toLowerCase() === 'category') return;
       catLabels.push(label);
       catCounts.push(parseFloat(r[1])||0);
       catCosts.push(parseCost(r[2]));
@@ -995,10 +987,12 @@ function renderDashTable(elId, tableData, colFormats) {
   const el = document.getElementById(elId);
   const fmts = colFormats || [];
   // Filter out header-like rows (rows where numeric columns are NaN)
-  const dataRows = tableData.rows.filter(r => {
-    const label = String(r[0]||'').trim();
-    if (!label) return false;
-    return true;
+  const dataRows = tableData.rows.map(r => {
+    // Replace blank first cell with (Not Assigned) for display
+    if (String(r[0]||'').trim() === '' && r.length > 1) {
+      return ['(Not Assigned)', ...r.slice(1)];
+    }
+    return r;
   });
   el.innerHTML = '<table class="dash-table"><thead><tr>' +
     tableData.headers.map(h=>`<th>${h}</th>`).join('') +
