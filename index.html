@@ -233,8 +233,8 @@
 <div class="tab-bar">
   <div class="tabs">
     <button id="tab-btn-log" class="tab-btn active" onclick="switchTab('log')">📋 Log New Issue</button>
-    <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar &amp; Issues</button>
     <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar &amp; Issues</button>
     <button class="tab-btn" onclick="switchTab('minutes')">📄 Meeting Minutes</button>
     <button class="tab-btn" onclick="switchTab('quotes')">💰 Quotes</button>
   </div>
@@ -840,7 +840,7 @@ function setEditMode(val) {
   if (logBtn) {
     logBtn.style.display = val ? '' : 'none';
     // If locked while on Log tab, switch to Calendar
-    if (!val && logBtn.classList.contains('active')) switchTab('calendar');
+    if (!val && logBtn.classList.contains('active')) switchTab('dashboard');
   }
   // Disable/enable form inputs only — never tab-bar, lock modal, or read-action buttons
   document.querySelectorAll('.tab-panel input, .tab-panel select, .tab-panel textarea, .tab-panel button:not(.read-only-btn)').forEach(el => {
@@ -928,7 +928,7 @@ document.getElementById('edit-status').addEventListener('change',function(){
 
 // ── TABS ──
 function switchTab(tab) {
-  const tabs = ['log','calendar','dashboard','minutes','quotes'];
+  const tabs = ['log','dashboard','calendar','minutes','quotes'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -1786,6 +1786,7 @@ function formatShortDate(val) {
   return dd+'-'+mm+'-'+yy;
 }
 async function deleteMinute(rowIndex) {
+  if (!editMode) { showToast('🔒 Unlock to delete entries','error'); return; }
   const m = minutesData.find(x=>x.rowIndex==rowIndex);
   const name = m ? (m['Meeting Name']||'this entry') : 'this entry';
   if (!confirm(`Delete "${name}"? This will also remove the file(s) from Google Drive. This cannot be undone.`)) return;
@@ -1886,6 +1887,7 @@ async function toggleQuoteStatus(rowIndex, currentStatus) {
   } catch(e) { showToast('Error updating status','error'); }
 }
 async function deleteQuote(rowIndex) {
+  if (!editMode) { showToast('🔒 Unlock to delete quotes','error'); return; }
   const q = quotesData.find(x=>x.rowIndex==rowIndex);
   const name = q ? (q['Quote Name']||'this quote') : 'this quote';
   if (!confirm(`Delete "${name}"? This will also remove the file from Google Drive. This cannot be undone.`)) return;
@@ -1921,10 +1923,10 @@ function renderQuotesList() {
           ${files.map((u,i)=>`&nbsp;<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join('')}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:120px">
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:120px;margin-right:28px">
         ${btnApproved}${btnPending}${btnRejected}
       </div>
-      <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1rem;cursor:pointer;color:#ccc;line-height:1;padding:2px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
+      <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:none;border:none;font-size:1.1rem;cursor:pointer;color:#ccc;line-height:1;padding:4px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
     </div>`;
   }).join('');
 }
