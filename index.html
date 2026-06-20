@@ -1911,7 +1911,7 @@ function renderQuotesList() {
     const btnApproved=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid var(--green);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isApproved?'var(--green)':'transparent'};color:${isApproved?'white':'var(--green)'}">✓ Approved</button>`;
     const btnPending=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid #f59e0b;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isPending?'#f59e0b':'transparent'};color:${isPending?'white':'#f59e0b'}">⏳ Pending</button>`;
     const btnRejected=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid var(--red);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isRejected?'var(--red)':'transparent'};color:${isRejected?'white':'var(--red)'}">✗ Rejected</button>`;
-    return `<div class="issue-card" style="cursor:default;position:relative">
+    return `<div class="issue-card" style="cursor:default;padding-right:2.5rem;position:relative">
       <div>
         <div class="issue-card-badge">${formatShortDate(q['Quote Date'])}</div>
       </div>
@@ -1923,10 +1923,11 @@ function renderQuotesList() {
           ${files.map((u,i)=>`&nbsp;<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join('')}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:120px;margin-right:28px">
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:120px">
         ${btnApproved}${btnPending}${btnRejected}
       </div>
-      <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:none;border:none;font-size:1.1rem;cursor:pointer;color:#ccc;line-height:1;padding:4px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
+      <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:#bbb;line-height:1;padding:2px 4px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#bbb'">✕</button>
+    </div>`;
     </div>`;
   }).join('');
 }
