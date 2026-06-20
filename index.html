@@ -232,7 +232,7 @@
 
 <div class="tab-bar">
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('log')">📋 Log New Issue</button>
+    <button id="tab-btn-log" class="tab-btn active" onclick="switchTab('log')">📋 Log New Issue</button>
     <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar &amp; Issues</button>
     <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
     <button class="tab-btn" onclick="switchTab('minutes')">📄 Meeting Minutes</button>
@@ -818,7 +818,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrQjJMcc4fUb5Z0zvTRo8Lik4i1mQKa7s0Om8WU7pDHvkkbIPEIFYrL4ITHzHXHdrOOg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlemURchvTIJjM-rQPl8QUc6qlA_gdM6d-lA1tEguESVLXSF90Gfrzw8TF4iupIfVRag/exec";
 
 // ── EDIT MODE (lock/unlock) ──
 const SESSION_KEY = 'cove_auth';
@@ -835,6 +835,13 @@ function setEditMode(val) {
   // Show readonly banner
   const banner = document.getElementById('readonly-banner');
   if (banner) banner.style.display = val ? 'none' : 'block';
+  // Show/hide Log New Issue tab
+  const logBtn = document.getElementById('tab-btn-log');
+  if (logBtn) {
+    logBtn.style.display = val ? '' : 'none';
+    // If locked while on Log tab, switch to Calendar
+    if (!val && logBtn.classList.contains('active')) switchTab('calendar');
+  }
   // Disable/enable form inputs only — never tab-bar, lock modal, or read-action buttons
   document.querySelectorAll('.tab-panel input, .tab-panel select, .tab-panel textarea, .tab-panel button:not(.read-only-btn)').forEach(el => {
     el.disabled = !val;
@@ -1853,15 +1860,29 @@ async function loadQuotes() {
   renderQuotesList();
 }
 async function toggleQuoteStatus(rowIndex, currentStatus) {
-  const newStatus=currentStatus==='Approved'?'Rejected':(currentStatus==='Rejected'?'Approved':'Approved');
-  const payload={action:'quoteUpdate',rowIndex,status:newStatus};
+  const order = ['Pending','Approved','Rejected'];
+  const next = order[(order.indexOf(currentStatus) + 1) % order.length];
+  const payload = {action:'quoteUpdate', rowIndex, status:next};
   try {
-    const url=SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
     await fetch(url);
-    const q=quotesData.find(x=>x.rowIndex==rowIndex);
-    if(q) q['Status']=newStatus;
+    const q = quotesData.find(x=>x.rowIndex==rowIndex);
+    if (q) q['Status'] = next;
     renderQuotesList();
-  } catch(e){ showToast('Error updating status','error'); }
+  } catch(e) { showToast('Error updating status','error'); }
+}
+async function deleteQuote(rowIndex) {
+  const q = quotesData.find(x=>x.rowIndex==rowIndex);
+  const name = q ? (q['Quote Name']||'this quote') : 'this quote';
+  if (!confirm(`Delete "${name}"? This will also remove the file from Google Drive. This cannot be undone.`)) return;
+  try {
+    const payload = {action:'quoteDelete', rowIndex};
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    await fetch(url);
+    quotesData = quotesData.filter(x=>x.rowIndex!=rowIndex);
+    renderQuotesList();
+    showToast('Quote deleted','success');
+  } catch(e) { showToast('Error deleting quote','error'); }
 }
 function renderQuotesList() {
   const el=document.getElementById('qt-list');
@@ -1869,13 +1890,14 @@ function renderQuotesList() {
   updateApprovedTotal();
   el.innerHTML=quotesData.slice().reverse().map(q=>{
     const status=q['Status']||'Pending';
-    const isApproved=status==='Approved', isRejected=status==='Rejected';
-    const statusColor=isApproved?'var(--green)':isRejected?'var(--red)':'var(--amber)';
+    const isApproved=status==='Approved', isRejected=status==='Rejected', isPending=status==='Pending';
     const files=(q['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
-    return `<div class="issue-card" style="cursor:default">
+    const btnApproved=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid var(--green);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isApproved?'var(--green)':'transparent'};color:${isApproved?'white':'var(--green)'}">✓ Approved</button>`;
+    const btnPending=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid #f59e0b;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isPending?'#f59e0b':'transparent'};color:${isPending?'white':'#f59e0b'}">⏳ Pending</button>`;
+    const btnRejected=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid var(--red);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isRejected?'var(--red)':'transparent'};color:${isRejected?'white':'var(--red)'}">✗ Rejected</button>`;
+    return `<div class="issue-card" style="cursor:default;position:relative">
       <div>
         <div class="issue-card-badge">${formatShortDate(q['Quote Date'])}</div>
-        <span style="font-size:.72rem;font-weight:700;color:${statusColor};display:block;margin-top:4px;text-align:center">${status.toUpperCase()}</span>
       </div>
       <div class="issue-card-body">
         <div class="issue-card-name">${q['Quote Name']||'(unnamed)'} · ${q['Company']||''}</div>
@@ -1885,10 +1907,10 @@ function renderQuotesList() {
           ${files.map((u,i)=>`&nbsp;<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join('')}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;min-width:110px">
-        <button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:6px 14px;border:none;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;background:${isApproved?'var(--green)':isRejected?'var(--red)':'#888'};color:white">${isApproved?'✓ Approved':isRejected?'✗ Rejected':'Pending'}</button>
-        <span style="font-size:.65rem;color:var(--slate-light);text-align:right">tap to toggle</span>
+      <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:120px">
+        ${btnApproved}${btnPending}${btnRejected}
       </div>
+      <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1rem;cursor:pointer;color:#ccc;line-height:1;padding:2px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
     </div>`;
   }).join('');
 }
