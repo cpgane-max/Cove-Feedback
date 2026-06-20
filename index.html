@@ -835,7 +835,7 @@ function setEditMode(val) {
   // Show readonly banner
   const banner = document.getElementById('readonly-banner');
   if (banner) banner.style.display = val ? 'none' : 'block';
-  // Disable/enable form inputs
+  // Disable/enable form inputs only — never tab-bar, lock modal, or read-action buttons
   document.querySelectorAll('.tab-panel input, .tab-panel select, .tab-panel textarea, .tab-panel button:not(.read-only-btn)').forEach(el => {
     el.disabled = !val;
   });
@@ -1778,6 +1778,7 @@ function formatShortDate(val) {
   const yy = String(d.getFullYear()).slice(2);
   return dd+'-'+mm+'-'+yy;
 }
+function renderMinutesList() {
   const el=document.getElementById('mm-list');
   if (!minutesData||minutesData.length===0) { el.innerHTML='<div class="issues-empty">No meeting minutes uploaded yet.</div>'; return; }
   el.innerHTML=minutesData.slice().reverse().map(m=>{
