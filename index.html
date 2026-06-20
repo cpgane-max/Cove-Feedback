@@ -557,7 +557,7 @@
         </div>
         <div class="field" style="align-self:end">
           <label>Files <span class="req">*</span></label>
-          <input type="file" id="mm-file" multiple accept=".pdf,.doc,.docx,image/*" onchange="handleMmFiles(this.files);this.value=''" style="display:none" />
+          <input type="file" id="mm-file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" onchange="handleMmFiles(this.files);this.value=''" style="display:none" />
           <button type="button" onclick="document.getElementById('mm-file').click()" style="padding:9px 16px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;width:100%">📁 Choose Files</button>
         </div>
       </div>
@@ -818,7 +818,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzlemURchvTIJjM-rQPl8QUc6qlA_gdM6d-lA1tEguESVLXSF90Gfrzw8TF4iupIfVRag/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9gSpnlWBTOjECyBzFm3waTYRWgXTOav7FgX9rHwxcdha8CgrualMZXMUQ_KhNE9BgpA/exec";
 
 // ── EDIT MODE (lock/unlock) ──
 const SESSION_KEY = 'cove_auth';
@@ -1785,12 +1785,25 @@ function formatShortDate(val) {
   const yy = String(d.getFullYear()).slice(2);
   return dd+'-'+mm+'-'+yy;
 }
+async function deleteMinute(rowIndex) {
+  const m = minutesData.find(x=>x.rowIndex==rowIndex);
+  const name = m ? (m['Meeting Name']||'this entry') : 'this entry';
+  if (!confirm(`Delete "${name}"? This will also remove the file(s) from Google Drive. This cannot be undone.`)) return;
+  try {
+    const payload = {action:'minuteDelete', rowIndex};
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    await fetch(url);
+    minutesData = minutesData.filter(x=>x.rowIndex!=rowIndex);
+    renderMinutesList();
+    showToast('Entry deleted','success');
+  } catch(e) { showToast('Error deleting entry','error'); }
+}
 function renderMinutesList() {
   const el=document.getElementById('mm-list');
   if (!minutesData||minutesData.length===0) { el.innerHTML='<div class="issues-empty">No meeting minutes uploaded yet.</div>'; return; }
   el.innerHTML=minutesData.slice().reverse().map(m=>{
     const files=(m['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
-    return `<div class="issue-card" style="cursor:default">
+    return `<div class="issue-card" style="cursor:default;position:relative">
       <div>
         <div class="issue-card-badge">${formatShortDate(m['Meeting Date'])}</div>
       </div>
@@ -1798,6 +1811,7 @@ function renderMinutesList() {
         <div class="issue-card-name">${m['Meeting Name']||'(unnamed)'}</div>
         <div class="issue-card-meta">${files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join(' &nbsp;')}</div>
       </div>
+      <button onclick="deleteMinute(${m.rowIndex||0})" title="Delete entry" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1rem;cursor:pointer;color:#ccc;line-height:1;padding:2px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
     </div>`;
   }).join('');
 }
