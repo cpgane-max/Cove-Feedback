@@ -861,7 +861,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzr85OQTJWde4mJJyWpQ2PEzTeNQgpj__C_V05E0yVxX7KMcgU0xJXNAFzJiYsgEmYBFQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHLxVShqZZPxKdTMHSGqMIEMV3SIqOxK3G28tv-jTk1r-SFVYXufwNgrTWRRsyWrESyg/exec";
 
 // ── EDIT MODE (lock/unlock) ──
 const SESSION_KEY = 'cove_auth';
@@ -1702,7 +1702,11 @@ function closeEditModal(){document.getElementById('edit-modal-bg').classList.rem
 
 async function saveEdit(){
   const user=document.getElementById('edit-user').value;
-  if(!user){showToast('Please select your name before saving','error');document.getElementById('edit-user').focus();return;}
+  const editReq=['edit-date','edit-name','edit-medium','edit-area','edit-issue'];
+  let editValid=true;
+  editReq.forEach(id=>{const el=document.getElementById(id);if(!el.value.trim()){el.style.borderColor='#C0392B';editValid=false;}else el.style.borderColor='';});
+  if(!user){document.getElementById('edit-user').style.borderColor='#C0392B';editValid=false;}else document.getElementById('edit-user').style.borderColor='';
+  if(!editValid){showToast('Please fill in all required fields','error');return;}
   const rowIndex=document.getElementById('edit-row').value;
   let cost=document.getElementById('edit-cost').value.trim();
   if(cost&&!isNaN(parseFloat(cost))) cost='$'+parseFloat(cost).toFixed(2);
@@ -1862,7 +1866,7 @@ function renderMinutesList() {
   if (!minutesData||minutesData.length===0) { el.innerHTML='<div class="issues-empty">No meeting minutes uploaded yet.</div>'; return; }
   el.innerHTML=minutesData.slice().reverse().map(m=>{
     const files=(m['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
-    return `<div class="issue-card" style="cursor:default;position:relative">
+    return `<div class="issue-card" style="cursor:default;position:relative;padding-right:4rem">
       <div>
         <div class="issue-card-badge">${formatShortDate(m['Meeting Date'])}</div>
       </div>
@@ -1870,7 +1874,10 @@ function renderMinutesList() {
         <div class="issue-card-name">${m['Meeting Name']||'(unnamed)'}</div>
         <div class="issue-card-meta">${files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join(' &nbsp;')}</div>
       </div>
-      <button onclick="deleteMinute(${m.rowIndex||0})" title="Delete entry" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1rem;cursor:pointer;color:#ccc;line-height:1;padding:2px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
+      <div style="position:absolute;top:10px;right:8px;display:flex;flex-direction:column;gap:4px">
+        <button onclick="openMmEditModal(${m.rowIndex||0})" title="Edit entry" style="background:none;border:none;font-size:1rem;cursor:pointer;color:#aaa;line-height:1;padding:2px 4px" onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='#aaa'">✏️</button>
+        <button onclick="deleteMinute(${m.rowIndex||0})" title="Delete entry" style="background:none;border:none;font-size:1rem;cursor:pointer;color:#aaa;line-height:1;padding:2px 4px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#aaa'">✕</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1984,7 +1991,10 @@ function renderQuotesList() {
       <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:120px">
         ${btnApproved}${btnPending}${btnRejected}
       </div>
-      <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:#bbb;line-height:1;padding:2px 4px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#bbb'">✕</button>
+      <div style="position:absolute;top:10px;right:8px;display:flex;flex-direction:column;gap:4px">
+        <button onclick="openQtEditModal(${q.rowIndex||0})" title="Edit quote" style="background:none;border:none;font-size:1rem;cursor:pointer;color:#aaa;line-height:1;padding:2px 4px" onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='#aaa'">✏️</button>
+        <button onclick="deleteQuote(${q.rowIndex||0})" title="Delete quote" style="background:none;border:none;font-size:1rem;cursor:pointer;color:#aaa;line-height:1;padding:2px 4px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#aaa'">✕</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1993,9 +2003,258 @@ function updateApprovedTotal() {
   document.getElementById('quotes-approved-total').textContent=fmtCurrency(total);
 }
 
+
+// ══════════════════════════════
+// EDIT MINUTES MODAL
+// ══════════════════════════════
+let mmEditFiles = [];
+
+function openMmEditModal(rowIndex) {
+  if (!editMode) { showToast('🔒 Unlock to edit entries','error'); return; }
+  const m = (minutesData||[]).find(x=>x.rowIndex==rowIndex);
+  if (!m) return;
+  document.getElementById('mm-edit-row').value = rowIndex;
+  document.getElementById('mm-edit-date').value = m['Meeting Date']||'';
+  document.getElementById('mm-edit-name').value = m['Meeting Name']||'';
+  // Show existing files as links
+  const files = (m['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
+  document.getElementById('mm-edit-existing-files').innerHTML = files.length
+    ? files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);margin-right:8px">📎 File ${i+1}</a>`).join('')
+    : '<span style="color:#aaa">None</span>';
+  mmEditFiles = [];
+  document.getElementById('mm-edit-file-list').innerHTML = '';
+  document.getElementById('mm-edit-modal-bg').classList.add('open');
+}
+function closeMmEditModal() {
+  document.getElementById('mm-edit-modal-bg').classList.remove('open');
+  mmEditFiles = [];
+}
+function handleMmEditFiles(files) {
+  for (const f of files) if (!mmEditFiles.find(x=>x.name===f.name)) mmEditFiles.push(f);
+  document.getElementById('mm-edit-file-list').innerHTML = mmEditFiles.map(f=>`<div class="file-chip">📄 ${f.name}</div>`).join('');
+}
+async function saveMmEdit() {
+  const date = document.getElementById('mm-edit-date').value;
+  const name = document.getElementById('mm-edit-name').value.trim();
+  const rowIndex = document.getElementById('mm-edit-row').value;
+  // Validation
+  let valid = true;
+  if (!date) { document.getElementById('mm-edit-date').style.borderColor='#C0392B'; valid=false; } else document.getElementById('mm-edit-date').style.borderColor='';
+  if (!name) { document.getElementById('mm-edit-name').style.borderColor='#C0392B'; valid=false; } else document.getElementById('mm-edit-name').style.borderColor='';
+  if (!valid) { showToast('Please fill in all required fields','error'); return; }
+  const btn = document.getElementById('mm-edit-save-btn'), sp = document.getElementById('mm-edit-spinner');
+  btn.disabled=true; document.getElementById('mm-edit-save-text').textContent='Saving…'; sp.classList.add('active');
+  const yy = date.slice(2);
+  const driveName = `${yy} - ${name}`;
+  let filesPayload = [];
+  try {
+    filesPayload = await Promise.all(mmEditFiles.map(async f=>({
+      name: driveName+(mmEditFiles.length>1?'_'+f.name:'.'+f.name.split('.').pop()),
+      mimeType: f.type||'application/octet-stream',
+      data: await readFileAsBase64(f)
+    })));
+  } catch(e) { showToast('Error reading files','error'); btn.disabled=false; document.getElementById('mm-edit-save-text').textContent='Save Changes'; sp.classList.remove('active'); return; }
+  const payload = { action:'minutesUpdate', rowIndex:parseInt(rowIndex), meetingDate:date, meetingName:name, files:[] };
+  try {
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    const r = await fetch(url); const res = await r.json();
+    if (filesPayload.length > 0) await uploadFiles(filesPayload, rowIndex, 'Meeting Minutes');
+    showToast('✓ Minutes updated!','success');
+    const m = (minutesData||[]).find(x=>x.rowIndex==rowIndex);
+    if (m) { m['Meeting Date']=date; m['Meeting Name']=name; }
+    closeMmEditModal(); renderMinutesList();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { btn.disabled=false; document.getElementById('mm-edit-save-text').textContent='Save Changes'; sp.classList.remove('active'); }
+}
+
+// ══════════════════════════════
+// EDIT QUOTE MODAL
+// ══════════════════════════════
+let qtEditFile = null;
+
+function openQtEditModal(rowIndex) {
+  if (!editMode) { showToast('🔒 Unlock to edit quotes','error'); return; }
+  const q = (quotesData||[]).find(x=>x.rowIndex==rowIndex);
+  if (!q) return;
+  document.getElementById('qt-edit-row').value = rowIndex;
+  document.getElementById('qt-edit-date').value = q['Quote Date']||'';
+  document.getElementById('qt-edit-trade').value = q['Trade']||'';
+  document.getElementById('qt-edit-name').value = q['Quote Name']||'';
+  document.getElementById('qt-edit-company').value = q['Company']||'';
+  document.getElementById('qt-edit-cost').value = (q['Cost']||'').replace('$','');
+  const files = (q['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
+  document.getElementById('qt-edit-existing-files').innerHTML = files.length
+    ? files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);margin-right:8px">📎 File ${i+1}</a>`).join('')
+    : '<span style="color:#aaa">None</span>';
+  qtEditFile = null;
+  document.getElementById('qt-edit-file-chip').innerHTML = '';
+  document.getElementById('qt-edit-modal-bg').classList.add('open');
+}
+function closeQtEditModal() {
+  document.getElementById('qt-edit-modal-bg').classList.remove('open');
+  qtEditFile = null;
+}
+function handleQtEditFile(files) {
+  if (files.length > 0) {
+    qtEditFile = files[0];
+    document.getElementById('qt-edit-file-chip').innerHTML = `<div class="file-chip">📄 ${qtEditFile.name}</div>`;
+  }
+}
+async function saveQtEdit() {
+  const date = document.getElementById('qt-edit-date').value;
+  const trade = document.getElementById('qt-edit-trade').value;
+  const name = document.getElementById('qt-edit-name').value.trim();
+  const company = document.getElementById('qt-edit-company').value.trim();
+  const costRaw = document.getElementById('qt-edit-cost').value.trim();
+  const rowIndex = document.getElementById('qt-edit-row').value;
+  // Validation
+  const fields = [['qt-edit-date',date],['qt-edit-trade',trade],['qt-edit-name',name],['qt-edit-company',company],['qt-edit-cost',costRaw]];
+  let valid = true;
+  fields.forEach(([id,val])=>{ const el=document.getElementById(id); if(!val){el.style.borderColor='#C0392B';valid=false;}else el.style.borderColor=''; });
+  if (!valid) { showToast('Please fill in all required fields','error'); return; }
+  const cost = '$'+parseFloat(costRaw.replace(/[^0-9.]/g,'')).toFixed(2);
+  const btn = document.getElementById('qt-edit-save-btn'), sp = document.getElementById('qt-edit-spinner');
+  btn.disabled=true; document.getElementById('qt-edit-save-text').textContent='Saving…'; sp.classList.add('active');
+  let iso = date.match(/(\d{4})-(\d{2})-(\d{2})/);
+  const yy = iso ? iso[1].slice(2)+'-'+iso[2]+'-'+iso[3] : '';
+  const driveName = `${yy} - ${company} - ${name}`;
+  let filePayload = null;
+  if (qtEditFile) {
+    try { filePayload = {name:driveName+'.'+qtEditFile.name.split('.').pop(), mimeType:qtEditFile.type||'application/octet-stream', data:await readFileAsBase64(qtEditFile)}; }
+    catch(e) { showToast('Error reading file','error'); btn.disabled=false; document.getElementById('qt-edit-save-text').textContent='Save Changes'; sp.classList.remove('active'); return; }
+  }
+  const payload = { action:'quoteUpdate', rowIndex:parseInt(rowIndex), quoteDate:date, trade, quoteName:name, company, cost, files:[] };
+  try {
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    await fetch(url);
+    if (filePayload) await uploadFiles([filePayload], rowIndex, 'Quotes');
+    showToast('✓ Quote updated!','success');
+    const q = (quotesData||[]).find(x=>x.rowIndex==rowIndex);
+    if (q) { q['Quote Date']=date; q['Trade']=trade; q['Quote Name']=name; q['Company']=company; q['Cost']=cost; }
+    closeQtEditModal(); renderQuotesList();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { btn.disabled=false; document.getElementById('qt-edit-save-text').textContent='Save Changes'; sp.classList.remove('active'); }
+}
+
+// ══════════════════════════════
+// AWAITING INFO
+// ══════════════════════════════
+function toggleAwaiting(checkId, fieldsId) {
+  document.getElementById(fieldsId).style.display = document.getElementById(checkId).checked ? 'block' : 'none';
+}
+
+function renderAwaitingList() {
+  const el = document.getElementById('awaiting-list');
+  if (!allIssues || allIssues.length === 0) { el.innerHTML = '<div class="issues-empty">No issues loaded yet — visit Calendar &amp; Issues first.</div>'; return; }
+  const waiting = allIssues.filter(i => i['Awaiting Info'] === 'TRUE');
+  if (waiting.length === 0) { el.innerHTML = '<div class="issues-empty">No issues currently awaiting external information. 🎉</div>'; return; }
+  el.innerHTML = waiting.map(i => `
+    <div class="issue-card" onclick="openEditModal(${i.rowIndex})" style="cursor:pointer">
+      <div>
+        <div class="issue-card-badge">${i['Date']||'–'}</div>
+        <div class="status-pill ${(i['Status']||'Open')==='Closed'?'closed':'open'}">${(i['Status']||'OPEN').toUpperCase()}</div>
+      </div>
+      <div class="issue-card-body">
+        <div class="issue-card-name">${i['Resident Name']||'(unknown)'}${i['Unit Number']?' · Unit '+i['Unit Number']:''}</div>
+        ${i['Category']?`<div class="issue-card-area">📍 ${i['Category']}</div>`:''}
+        <div class="issue-card-issue">${i['Issue']||''}</div>
+        <div class="issue-card-meta" style="margin-top:6px">
+          <span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:600">⏳ Awaiting: ${i['Awaiting What']||'(not specified)'}</span>
+          ${i['Awaiting By Who']?`<span style="margin-left:6px;font-size:.75rem;color:var(--slate)">👤 ${i['Awaiting By Who']}</span>`:''}
+        </div>
+      </div>
+      <div class="issue-card-arrow">›</div>
+    </div>`).join('');
+}
+
 initCalendar();
 // Apply initial lock state after DOM ready
 setTimeout(() => setEditMode(editMode), 100);
 </script>
+
+<!-- ══ EDIT MINUTES MODAL ══ -->
+<div class="modal-bg" id="mm-edit-modal-bg" onclick="if(event.target===this)closeMmEditModal()">
+  <div class="modal-box">
+    <h2 id="mm-edit-title">Edit Meeting Minutes</h2>
+    <input type="hidden" id="mm-edit-row" />
+    <div class="modal-section">Details</div>
+    <div class="edit-field">
+      <label>Meeting Date <span class="req">*</span></label>
+      <input type="date" id="mm-edit-date" />
+    </div>
+    <div class="edit-field">
+      <label>Meeting Name <span class="req">*</span></label>
+      <input type="text" id="mm-edit-name" placeholder="e.g. AGM 2025" />
+    </div>
+    <div class="modal-section">Files</div>
+    <div class="edit-field">
+      <label>Existing Files</label>
+      <div id="mm-edit-existing-files" style="font-size:.82rem;color:var(--slate)"></div>
+    </div>
+    <div class="edit-field">
+      <label>Add More Files</label>
+      <input type="file" id="mm-edit-file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" onchange="handleMmEditFiles(this.files);this.value=''" style="display:none" />
+      <button type="button" onclick="document.getElementById('mm-edit-file').click()" style="padding:8px 14px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer">📁 Choose Files</button>
+    </div>
+    <div id="mm-edit-file-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeMmEditModal()">Cancel</button>
+      <button class="btn-primary" id="mm-edit-save-btn" onclick="saveMmEdit()"><span id="mm-edit-save-text">Save Changes</span><div class="spinner" id="mm-edit-spinner"></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT QUOTE MODAL ══ -->
+<div class="modal-bg" id="qt-edit-modal-bg" onclick="if(event.target===this)closeQtEditModal()">
+  <div class="modal-box">
+    <h2 id="qt-edit-title">Edit Quote</h2>
+    <input type="hidden" id="qt-edit-row" />
+    <div class="modal-section">Details</div>
+    <div class="edit-field">
+      <label>Quote Date <span class="req">*</span></label>
+      <input type="date" id="qt-edit-date" />
+    </div>
+    <div class="edit-field">
+      <label>Trade <span class="req">*</span></label>
+      <select id="qt-edit-trade">
+        <option value="">— Select trade —</option>
+        <option>Building Manager</option><option>Carpenter/Builder</option>
+        <option>Cleaner</option><option>Committee Member</option>
+        <option>Cove Gardener</option><option>Electrician</option>
+        <option>Handyman</option><option>Lift Tech</option>
+        <option>Locksmith</option><option>Painter</option>
+        <option>Plumber</option><option>Strata Manager</option><option>Other</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Quote Name <span class="req">*</span></label>
+      <input type="text" id="qt-edit-name" placeholder="Brief description of work" />
+    </div>
+    <div class="edit-field">
+      <label>Company <span class="req">*</span></label>
+      <input type="text" id="qt-edit-company" placeholder="e.g. ABC Plumbing" />
+    </div>
+    <div class="edit-field">
+      <label>Cost (AUD) <span class="req">*</span></label>
+      <div class="currency-wrap"><span>$</span><input type="text" id="qt-edit-cost" placeholder="0.00" inputmode="decimal" /></div>
+    </div>
+    <div class="modal-section">Document</div>
+    <div class="edit-field">
+      <label>Existing File</label>
+      <div id="qt-edit-existing-files" style="font-size:.82rem;color:var(--slate)"></div>
+    </div>
+    <div class="edit-field">
+      <label>Add / Replace File</label>
+      <input type="file" id="qt-edit-file" accept=".pdf,.doc,.docx,image/*" onchange="handleQtEditFile(this.files);this.value=''" style="display:none" />
+      <button type="button" onclick="document.getElementById('qt-edit-file').click()" style="padding:8px 14px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer">📁 Choose File</button>
+    </div>
+    <div id="qt-edit-file-chip" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeQtEditModal()">Cancel</button>
+      <button class="btn-primary" id="qt-edit-save-btn" onclick="saveQtEdit()"><span id="qt-edit-save-text">Save Changes</span><div class="spinner" id="qt-edit-spinner"></div></button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
