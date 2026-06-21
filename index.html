@@ -799,8 +799,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
-      <button class="btn-primary" id="edit-save-btn" onclick="saveEdit()">
+      <button class="btn-secondary read-only-btn" onclick="closeEditModal()" id="edit-close-btn">Close</button>
+      <button class="btn-primary edit-only" id="edit-save-btn" onclick="saveEdit()">
         <span id="edit-save-text">Save Changes</span>
         <div class="spinner" id="edit-spinner"></div>
       </button>
@@ -842,8 +842,12 @@ function setEditMode(val) {
     // If locked while on Log tab, switch to Calendar
     if (!val && logBtn.classList.contains('active')) switchTab('dashboard');
   }
-  // Disable/enable form inputs only — never tab-bar, lock modal, or read-action buttons
+  // Disable tab panel inputs but NOT the edit modal (so issues can be viewed read-only)
   document.querySelectorAll('.tab-panel input, .tab-panel select, .tab-panel textarea, .tab-panel button:not(.read-only-btn)').forEach(el => {
+    if (!el.closest('#edit-modal-bg')) el.disabled = !val;
+  });
+  // Edit modal: disable inputs when locked so content is viewable but not editable
+  document.querySelectorAll('#edit-modal-bg input, #edit-modal-bg select, #edit-modal-bg textarea').forEach(el => {
     el.disabled = !val;
   });
 }
