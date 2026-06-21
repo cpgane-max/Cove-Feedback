@@ -1019,9 +1019,10 @@ async function loadDashboard() {
 function parseCost(v) {
   return parseFloat(String(v||'').replace(/[$,]/g,'')) || 0;
 }
-function fmtCurrency(v) {
-  return '$' + v.toLocaleString('en-AU', {minimumFractionDigits:2, maximumFractionDigits:2});
+function fmtCurrency(v, decimals=2) {
+  return '$' + v.toLocaleString('en-AU', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
 }
+function fmtDollars(v) { return fmtCurrency(Math.round(parseCost(v)), 0); }
 
 function renderDashboard(data) {
   // ── DONUT: Open vs Closed ──
@@ -1986,7 +1987,7 @@ function renderQuotesList() {
         <div class="issue-card-name">${q['Quote Name']||'(unnamed)'} · ${q['Company']||''}</div>
         <div class="issue-card-area">🔧 ${q['Trade']||''}</div>
         <div class="issue-card-meta">
-          <strong style="color:var(--blue-dark)">${q['Cost']||'–'}</strong>
+          <strong style="color:var(--blue-dark)">${fmtDollars(q['Cost'])}</strong>
           ${files.map((u,i)=>`&nbsp;<a href="${u}" target="_blank" style="color:var(--blue);text-decoration:none">📎 File ${i+1}</a>`).join('')}
         </div>
       </div>
@@ -2009,18 +2010,26 @@ function updateApprovedTotal() {
 // Convert any date string to YYYY-MM-DD for <input type="date">
 function toInputDate(val) {
   if (!val) return '';
+  val = String(val).trim();
   // Already YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
   // DD/MM/YYYY
-  const dmy = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-  // DD-MM-YY (display format)
+  const dmy = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  // DD-MM-YYYY
+  const dmy3 = val.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (dmy3) return `${dmy3[3]}-${dmy3[2].padStart(2,'0')}-${dmy3[1].padStart(2,'0')}`;
+  // DD-MM-YY (display format e.g. 10-03-26)
   const dmy2 = val.match(/^(\d{2})-(\d{2})-(\d{2})$/);
   if (dmy2) return `20${dmy2[3]}-${dmy2[2]}-${dmy2[1]}`;
-  // DD-MM-YYYY
-  const dmy3 = val.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (dmy3) return `${dmy3[3]}-${dmy3[2]}-${dmy3[1]}`;
-  return val;
+  // Try parsing as a JS Date (handles "Mon Mar 10 2026..." etc)
+  const d = new Date(val);
+  if (!isNaN(d)) {
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+  return '';
 }
 
 // ══════════════════════════════
