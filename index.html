@@ -983,7 +983,7 @@ function switchTab(tab) {
   if(tab==='dashboard'){ dashLoaded=false; loadDashboard(); }
   if(tab==='minutes') loadMinutes();
   if(tab==='quotes') loadQuotes();
-  if(tab==='awaiting') renderAwaitingList();
+  if(tab==='awaiting') { allIssues=null; renderAwaitingList(); }
   setTimeout(() => setEditMode(editMode), 50);
 }
 
@@ -2143,9 +2143,19 @@ function toggleAwaiting(checkId, fieldsId) {
   document.getElementById(fieldsId).style.display = document.getElementById(checkId).checked ? 'block' : 'none';
 }
 
-function renderAwaitingList() {
+async function renderAwaitingList() {
   const el = document.getElementById('awaiting-list');
-  if (!allIssues || allIssues.length === 0) { el.innerHTML = '<div class="issues-empty">No issues loaded yet — visit Calendar &amp; Issues first.</div>'; return; }
+  if (!allIssues || allIssues.length === 0) {
+    el.innerHTML = '<div class="issues-empty">Loading…</div>';
+    try {
+      const r = await fetch(SCRIPT_URL + '?t=' + Date.now());
+      const data = await r.json();
+      allIssues = Array.isArray(data) ? data : [];
+    } catch(e) {
+      el.innerHTML = '<div class="issues-empty">Could not load issues.</div>';
+      return;
+    }
+  }
   const waiting = allIssues.filter(i => i['Awaiting Info'] === 'TRUE');
   if (waiting.length === 0) { el.innerHTML = '<div class="issues-empty">No issues currently awaiting external information. 🎉</div>'; return; }
   el.innerHTML = waiting.map(i => `
