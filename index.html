@@ -1604,11 +1604,10 @@ function renderIssueList(elId,issues){
 // EDIT MODAL
 // ══════════════════════════════
 function openEditModal(rowIndex){
-  if (!editMode) { showToast('🔒 Unlock to edit issues','error'); return; }
   const issue=(allIssues||[]).find(i=>i.rowIndex==rowIndex);
   if(!issue)return;
   document.getElementById('edit-row').value=rowIndex;
-  document.getElementById('edit-modal-title').textContent=`Edit Issue — ${issue['Resident Name']||'Row '+rowIndex}`;
+  document.getElementById('edit-modal-title').textContent=`${editMode?'Edit':'View'} Issue — ${issue['Resident Name']||'Row '+rowIndex}`;
   let dtVal='';
   if(issue['Date']){
     const d=parseIssueDate(issue['Date']);
