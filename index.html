@@ -185,7 +185,8 @@
     /* EDIT MODAL */
     .modal-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto; }
     .modal-bg.open { display:flex; }
-    .modal { background:white;border-radius:14px;padding:2rem;width:100%;max-width:780px;box-shadow:0 8px 40px rgba(0,0,0,.2);margin:auto; }
+    .modal, .modal-box { background:white;border-radius:14px;padding:2rem;width:100%;max-width:780px;box-shadow:0 8px 40px rgba(0,0,0,.35);margin:auto; }
+    .modal-box h2 { font-size:1.05rem;font-weight:700;color:var(--blue-dark);margin:0 0 1.4rem;padding-bottom:.8rem;border-bottom:2px solid var(--blue-light); }
     .modal-hdr { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem; }
     .modal-hdr h2 { font-size:1.05rem;font-weight:600;color:var(--blue-dark); }
     .modal-close { background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--slate-light);line-height:1; }
