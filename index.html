@@ -861,7 +861,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHLxVShqZZPxKdTMHSGqMIEMV3SIqOxK3G28tv-jTk1r-SFVYXufwNgrTWRRsyWrESyg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyFC1Zx9ropl-QOQewLhJCq7MRs1xDNZ3I516ASgrRbFJmmqgJCEFtdMCe7kuNUcczKg/exec";
 
 // ── EDIT MODE (lock/unlock) ──
 const SESSION_KEY = 'cove_auth';
@@ -1687,7 +1687,7 @@ function openEditModal(rowIndex){
   document.getElementById('edit-resp-by').value=issue['Response By']||'';
   document.getElementById('edit-cost').value=(issue['Cost']||'').replace('$','');
   document.getElementById('edit-media').value=issue['Media']||'';
-  const isAwaiting=issue['Awaiting Info']==='TRUE';
+  const isAwaiting=(issue['Awaiting Info']||'').toString().toUpperCase()==='TRUE';
   document.getElementById('edit-awaiting').checked=isAwaiting;
   document.getElementById('edit-awaiting-fields').style.display=isAwaiting?'block':'none';
   document.getElementById('edit-awaiting-what').value=issue['Awaiting What']||'';
@@ -2156,7 +2156,7 @@ async function renderAwaitingList() {
       return;
     }
   }
-  const waiting = allIssues.filter(i => i['Awaiting Info'] === 'TRUE');
+  const waiting = allIssues.filter(i => (i['Awaiting Info']||'').toString().toUpperCase() === 'TRUE');
   if (waiting.length === 0) { el.innerHTML = '<div class="issues-empty">No issues currently awaiting external information. 🎉</div>'; return; }
   el.innerHTML = waiting.map(i => `
     <div class="issue-card" onclick="openEditModal(${i.rowIndex})" style="cursor:pointer">
