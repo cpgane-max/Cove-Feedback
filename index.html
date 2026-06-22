@@ -2288,7 +2288,14 @@ async function renderAwaitingList() {
 }
 
 initCalendar();
-// Apply initial lock state after DOM ready
+// Open tab from URL parameter (e.g. ?tab=quotes from email links)
+(function() {
+  const urlTab = new URLSearchParams(window.location.search).get('tab');
+  const validTabs = ['log','dashboard','calendar','minutes','quotes','awaiting'];
+  if (urlTab && validTabs.includes(urlTab)) {
+    setTimeout(() => switchTab(urlTab), 150);
+  }
+})();
 setTimeout(() => setEditMode(editMode), 100);
 </script>
 
