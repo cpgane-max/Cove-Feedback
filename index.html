@@ -211,7 +211,8 @@
   </div>
   <div class="header-right">
     <span id="live-clock"></span>
-    <button id="lock-icon" onclick="showLockModal()" title="Read only — click to unlock" style="background:none;border:none;font-size:1.4rem;cursor:pointer;padding:4px 8px;margin-left:8px;line-height:1;opacity:0.85">🔒</button>
+    <button onclick="openNotifModal()" title="Notification settings" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 6px;line-height:1;opacity:0.85">🔔</button>
+    <button id="lock-icon" onclick="showLockModal()" title="Read only — click to unlock" style="background:none;border:none;font-size:1.4rem;cursor:pointer;padding:4px 8px;margin-left:4px;line-height:1;opacity:0.85">🔒</button>
   </div>
 </header>
 
@@ -333,7 +334,7 @@
             <option value="">— None assigned —</option>
             <option>Building Manager</option><option>Carpenter/Builder</option>
             <option>Cleaner</option><option>Committee Member</option>
-            <option>Cove Gardener</option><option>Electrician</option>
+            <option>Contractor</option><option>Cove Gardener</option><option>Electrician</option>
             <option>Handyman</option><option>Lift Tech</option>
             <option>Locksmith</option><option>Painter</option>
             <option>Plumber</option><option>Strata Manager</option><option>Other</option>
@@ -615,7 +616,7 @@
             <option value="">— Select trade —</option>
             <option>Building Manager</option><option>Carpenter/Builder</option>
             <option>Cleaner</option><option>Committee Member</option>
-            <option>Cove Gardener</option><option>Electrician</option>
+            <option>Contractor</option><option>Cove Gardener</option><option>Electrician</option>
             <option>Handyman</option><option>Lift Tech</option>
             <option>Locksmith</option><option>Painter</option>
             <option>Plumber</option><option>Strata Manager</option><option>Other</option>
@@ -742,7 +743,7 @@
         <option value="">— None assigned —</option>
         <option>Building Manager</option><option>Carpenter/Builder</option>
         <option>Cleaner</option><option>Committee Member</option>
-        <option>Cove Gardener</option><option>Electrician</option>
+        <option>Contractor</option><option>Cove Gardener</option><option>Electrician</option>
         <option>Handyman</option><option>Lift Tech</option>
         <option>Locksmith</option><option>Painter</option>
         <option>Plumber</option><option>Strata Manager</option><option>Other</option>
@@ -863,7 +864,8 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyFC1Zx9ropl-QOQewLhJCq7MRs1xDNZ3I516ASgrRbFJmmqgJCEFtdMCe7kuNUcczKg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbya-3vg4h3Y8PK-8gRBSDxQmh2rptfFJ_ASy-_7UQJijeNezdJVSAjQFYchkrCq5vhK/exec";
+const APP_URL = window.location.href.split('?')[0];
 
 // ── EDIT MODE (lock/unlock) ──
 const SESSION_KEY = 'cove_auth';
@@ -1942,15 +1944,13 @@ async function loadQuotes() {
   } catch(e) { quotesData=[]; }
   renderQuotesList();
 }
-async function toggleQuoteStatus(rowIndex, currentStatus) {
-  const order = ['Pending','Approved','Rejected'];
-  const next = order[(order.indexOf(currentStatus) + 1) % order.length];
-  const payload = {action:'quoteUpdate', rowIndex, status:next};
+async function toggleQuoteStatus(rowIndex, newStatus) {
+  const payload = {action:'quoteUpdate', rowIndex, status:newStatus};
   try {
     const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
     await fetch(url);
     const q = quotesData.find(x=>x.rowIndex==rowIndex);
-    if (q) q['Status'] = next;
+    if (q) q['Status'] = newStatus;
     renderQuotesList();
   } catch(e) { showToast('Error updating status','error'); }
 }
@@ -1976,9 +1976,9 @@ function renderQuotesList() {
     const status=q['Status']||'Pending';
     const isApproved=status==='Approved', isRejected=status==='Rejected', isPending=status==='Pending';
     const files=(q['Files']||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const btnApproved=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid var(--green);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isApproved?'var(--green)':'transparent'};color:${isApproved?'white':'var(--green)'}">✓ Approved</button>`;
-    const btnPending=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid #f59e0b;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isPending?'#f59e0b':'transparent'};color:${isPending?'white':'#f59e0b'}">⏳ Pending</button>`;
-    const btnRejected=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'${status}')" style="padding:5px 10px;border:2px solid var(--red);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isRejected?'var(--red)':'transparent'};color:${isRejected?'white':'var(--red)'}">✗ Rejected</button>`;
+    const btnApproved=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'Approved')" style="padding:5px 10px;border:2px solid var(--green);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isApproved?'var(--green)':'transparent'};color:${isApproved?'white':'var(--green)'}">✓ Approved</button>`;
+    const btnPending=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'Pending')" style="padding:5px 10px;border:2px solid #f59e0b;border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isPending?'#f59e0b':'transparent'};color:${isPending?'white':'#f59e0b'}">⏳ Pending</button>`;
+    const btnRejected=`<button onclick="toggleQuoteStatus(${q.rowIndex||0},'Rejected')" style="padding:5px 10px;border:2px solid var(--red);border-radius:6px;font-size:.7rem;font-weight:700;cursor:pointer;background:${isRejected?'var(--red)':'transparent'};color:${isRejected?'white':'var(--red)'}">✗ Rejected</button>`;
     return `<div class="issue-card" style="cursor:default;padding-right:2.5rem;position:relative">
       <div>
         <div class="issue-card-badge">${formatShortDate(q['Quote Date'])}</div>
@@ -2164,6 +2164,88 @@ async function saveQtEdit() {
   finally { btn.disabled=false; document.getElementById('qt-edit-save-text').textContent='Save Changes'; sp.classList.remove('active'); }
 }
 
+
+// ══════════════════════════════
+// NOTIFICATION SETTINGS
+// ══════════════════════════════
+let notifData = null; // [{email, newIssue, editIssue, newMinutes, editMinutes, newQuote, quoteStatus, rowIndex}]
+
+const NOTIF_EVENTS = [
+  {key:'newIssue',    label:'New Issue'},
+  {key:'editIssue',  label:'Issue Edited'},
+  {key:'newMinutes', label:'New Minutes'},
+  {key:'editMinutes',label:'Minutes Edited'},
+  {key:'newQuote',   label:'New Quote'},
+  {key:'quoteStatus',label:'Quote Status Changed'},
+];
+
+async function openNotifModal() {
+  document.getElementById('notif-modal-bg').classList.add('open');
+  if (!notifData) await loadNotifSettings();
+  renderNotifList();
+}
+function closeNotifModal() {
+  document.getElementById('notif-modal-bg').classList.remove('open');
+}
+async function loadNotifSettings() {
+  try {
+    const r = await fetch(SCRIPT_URL + '?notifications=1&t=' + Date.now());
+    const data = await r.json();
+    notifData = Array.isArray(data) ? data : [];
+  } catch(e) { notifData = []; }
+}
+function renderNotifList() {
+  const el = document.getElementById('notif-list');
+  if (!notifData || notifData.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--slate);font-size:.82rem">No email addresses configured yet.</div>';
+    return;
+  }
+  el.innerHTML = notifData.map((n, idx) => `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;margin-bottom:.8rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+        <span style="font-weight:600;font-size:.88rem;color:var(--blue-dark)">📧 ${n.email}</span>
+        <button onclick="removeNotifEmail(${idx})" style="background:none;border:none;color:#ccc;font-size:1rem;cursor:pointer;padding:2px 6px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='#ccc'">✕</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${NOTIF_EVENTS.map(ev => `
+          <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--slate);cursor:pointer;background:white;border:1px solid #e2e8f0;padding:4px 10px;border-radius:20px">
+            <input type="checkbox" data-idx="${idx}" data-key="${ev.key}" ${n[ev.key]?'checked':''} style="accent-color:var(--blue);cursor:pointer" onchange="toggleNotifEvent(${idx},'${ev.key}',this.checked)" />
+            ${ev.label}
+          </label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function toggleNotifEvent(idx, key, val) {
+  if (notifData[idx]) notifData[idx][key] = val;
+}
+function addNotifEmail() {
+  const input = document.getElementById('notif-new-email');
+  const email = input.value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { input.style.borderColor='#C0392B'; showToast('Please enter a valid email','error'); return; }
+  input.style.borderColor='';
+  if (notifData.find(n=>n.email===email)) { showToast('Email already added','error'); return; }
+  notifData.push({email, newIssue:false, editIssue:false, newMinutes:false, editMinutes:false, newQuote:false, quoteStatus:false});
+  input.value = '';
+  renderNotifList();
+}
+function removeNotifEmail(idx) {
+  notifData.splice(idx, 1);
+  renderNotifList();
+}
+async function saveNotifSettings() {
+  const btn = document.getElementById('notif-save-text');
+  const sp = document.getElementById('notif-spinner');
+  btn.textContent = 'Saving…'; sp.classList.add('active');
+  try {
+    const payload = {action:'saveNotifications', notifications: notifData};
+    const url = SCRIPT_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload));
+    await fetch(url);
+    showToast('✓ Notification settings saved','success');
+    closeNotifModal();
+  } catch(e) { showToast('Error saving settings','error'); }
+  finally { btn.textContent = 'Save All Settings'; sp.classList.remove('active'); }
+}
+
 // ══════════════════════════════
 // AWAITING INFO
 // ══════════════════════════════
@@ -2209,6 +2291,30 @@ initCalendar();
 // Apply initial lock state after DOM ready
 setTimeout(() => setEditMode(editMode), 100);
 </script>
+
+<!-- ══ NOTIFICATION SETTINGS MODAL ══ -->
+<div class="modal-bg" id="notif-modal-bg" onclick="if(event.target===this)closeNotifModal()">
+  <div class="modal-box" style="max-width:680px">
+    <h2>🔔 Notification Settings</h2>
+    <p style="font-size:.82rem;color:var(--slate);margin:-8px 0 1.2rem">Configure instant email alerts per address. Each email receives a notification when the selected events occur.</p>
+
+    <div id="notif-list" style="margin-bottom:1.2rem"><div style="text-align:center;padding:1rem;color:var(--slate)">Loading…</div></div>
+
+    <div class="modal-section">Add Email Address</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:200px;margin:0">
+        <label for="notif-new-email">Email Address</label>
+        <input type="email" id="notif-new-email" placeholder="email@example.com" />
+      </div>
+      <button type="button" onclick="addNotifEmail()" style="padding:10px 18px;background:var(--blue);color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">+ Add Email</button>
+    </div>
+
+    <div class="modal-actions" style="margin-top:1.4rem">
+      <button class="btn-secondary" onclick="closeNotifModal()">Close</button>
+      <button class="btn-primary" onclick="saveNotifSettings()"><span id="notif-save-text">Save All Settings</span><div class="spinner" id="notif-spinner"></div></button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ EDIT MINUTES MODAL ══ -->
 <div class="modal-bg" id="mm-edit-modal-bg" onclick="if(event.target===this)closeMmEditModal()">
@@ -2258,7 +2364,7 @@ setTimeout(() => setEditMode(editMode), 100);
         <option value="">— Select trade —</option>
         <option>Building Manager</option><option>Carpenter/Builder</option>
         <option>Cleaner</option><option>Committee Member</option>
-        <option>Cove Gardener</option><option>Electrician</option>
+        <option>Contractor</option><option>Cove Gardener</option><option>Electrician</option>
         <option>Handyman</option><option>Lift Tech</option>
         <option>Locksmith</option><option>Painter</option>
         <option>Plumber</option><option>Strata Manager</option><option>Other</option>
