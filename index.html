@@ -864,7 +864,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbya-3vg4h3Y8PK-8gRBSDxQmh2rptfFJ_ASy-_7UQJijeNezdJVSAjQFYchkrCq5vhK/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIYaCFaaiqnTBNCrRpxyGvgdGuhgXTc_OH_OYP-UritwyyIl7mm5tjlvawUbJmhVOCgw/exec";
 const APP_URL = window.location.href.split('?')[0];
 
 // ── EDIT MODE (lock/unlock) ──
@@ -2271,7 +2271,7 @@ async function renderAwaitingList() {
   el.innerHTML = waiting.map(i => `
     <div class="issue-card" onclick="openEditModal(${i.rowIndex})" style="cursor:pointer">
       <div>
-        <div class="issue-card-badge">${i['Date']||'–'}</div>
+        <div class="issue-card-badge">${(()=>{const dt=parseIssueDate(i['Date']);return dt&&!isNaN(dt)?dt.toLocaleDateString('en-AU',{timeZone:TZ,day:'numeric',month:'short',year:'numeric'}):(i['Date']||'–');})()}</div>
         <div class="status-pill ${(i['Status']||'Open')==='Closed'?'closed':'open'}">${(i['Status']||'OPEN').toUpperCase()}</div>
       </div>
       <div class="issue-card-body">
