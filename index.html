@@ -241,6 +241,7 @@
     <button class="tab-btn" onclick="switchTab('minutes')">📄 Meeting Minutes</button>
     <button class="tab-btn" onclick="switchTab('quotes')">💰 Quotes</button>
     <button class="tab-btn" onclick="switchTab('awaiting')">⏳ Awaiting Info</button>
+    <button class="tab-btn edit-only" id="tab-btn-pending" onclick="switchTab('pending')">📬 Pending Issues</button>
   </div>
 </div>
 
@@ -654,6 +655,18 @@
     <div id="qt-list"><div class="issues-empty">Loading…</div></div>
   </div>
 
+  <!-- ══ PENDING ISSUES TAB ══ -->
+  <div class="tab-panel edit-only" id="tab-pending">
+    <div style="background:rgba(255,255,255,0.92);border:1px solid rgba(255,255,255,0.6);border-radius:12px;padding:1.2rem 1.6rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--blue-dark)">📬 Email Submissions for Review</div>
+        <div style="font-size:.75rem;color:var(--slate);margin-top:2px">Emails sent to <strong>covecronulla47@gmail.com</strong> appear here for review. Approve to log as an issue, or reject.</div>
+      </div>
+      <button onclick="loadPendingIssues(true)" class="btn-secondary" style="font-size:.78rem;padding:7px 14px">🔄 Refresh</button>
+    </div>
+    <div id="pending-list"><div class="issues-empty">Loading…</div></div>
+  </div>
+
   <!-- ══ AWAITING INFO TAB ══ -->
   <div class="tab-panel" id="tab-awaiting">
     <div class="section-label">Issues Awaiting External Information</div>
@@ -864,7 +877,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMne28WmOQ46Hfxukgfh2TIDDlGZHY0bR-sehp-w_St6kJLGtcL_Isivg76yTECA8/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbya99amLZCtY9F5MIQYEtP8ZxhiAP9CcbgFmfri2ujd1leNj2iGK8lj-TkxT3BGe5vN/exec";
 const APP_URL = window.location.href.split('?')[0];
 
 // ── EDIT MODE (lock/unlock) ──
@@ -979,7 +992,7 @@ document.getElementById('edit-status').addEventListener('change',function(){
 
 // ── TABS ──
 function switchTab(tab) {
-  const tabs = ['log','dashboard','calendar','minutes','quotes','awaiting'];
+  const tabs = ['log','dashboard','calendar','minutes','quotes','awaiting','pending'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -988,6 +1001,7 @@ function switchTab(tab) {
   if(tab==='minutes') loadMinutes();
   if(tab==='quotes') loadQuotes();
   if(tab==='awaiting') { allIssues=null; renderAwaitingList(); }
+  if(tab==='pending') loadPendingIssues();
   setTimeout(() => setEditMode(editMode), 50);
 }
 
@@ -2165,18 +2179,176 @@ async function saveQtEdit() {
 }
 
 
+
+// ══════════════════════════════
+// PENDING ISSUES (Email Submissions)
+// ══════════════════════════════
+let pendingData = null;
+
+async function loadPendingIssues(force) {
+  if (!editMode) return;
+  if (pendingData && !force) { renderPendingList(); return; }
+  document.getElementById('pending-list').innerHTML = '<div class="issues-empty">Loading…</div>';
+  try {
+    const r = await fetch(SCRIPT_URL + '?pending=1&t=' + Date.now());
+    pendingData = await r.json();
+    if (!Array.isArray(pendingData)) pendingData = [];
+  } catch(e) { pendingData = []; }
+  renderPendingList();
+}
+
+function renderPendingList() {
+  const el = document.getElementById('pending-list');
+  if (!pendingData || pendingData.length === 0) {
+    el.innerHTML = '<div class="issues-empty">No pending email submissions. 📭</div>';
+    return;
+  }
+  el.innerHTML = pendingData.map(p => {
+    const files = (p['Attachments']||'').split(',').map(s=>s.trim()).filter(Boolean);
+    return `<div class="issue-card" style="cursor:default;position:relative;padding-right:2.5rem">
+      <div>
+        <div class="issue-card-badge">${formatShortDate(p['Email Date'])}</div>
+        <div class="status-pill open" style="margin-top:4px">PENDING</div>
+      </div>
+      <div class="issue-card-body">
+        <div class="issue-card-name">${p['Sender Name']||'Unknown'} <span style="font-size:.75rem;color:var(--slate)">&lt;${p['Sender Email']||''}&gt;</span></div>
+        <div class="issue-card-area" style="font-weight:600">📧 ${p['Subject']||'(no subject)'}</div>
+        <div class="issue-card-issue" style="max-height:3em;overflow:hidden">${(p['Body']||'').substring(0,200)}${p['Body']&&p['Body'].length>200?'…':''}</div>
+        ${files.length?`<div style="margin-top:4px">${files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);font-size:.75rem;margin-right:8px">📎 Attachment ${i+1}</a>`).join('')}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:100px;align-items:flex-end">
+        <button onclick="openPendingApproveModal(${p.rowIndex})" style="padding:6px 12px;background:var(--green);color:white;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">✅ Approve</button>
+        <button onclick="rejectPending(${p.rowIndex})" style="padding:6px 12px;background:var(--red);color:white;border:none;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">✕ Reject</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPendingApproveModal(rowIndex) {
+  const p = (pendingData||[]).find(x=>x.rowIndex==rowIndex);
+  if (!p) return;
+  document.getElementById('pa-row').value = rowIndex;
+  // Pre-fill from email
+  document.getElementById('pa-date').value = toInputDate(p['Email Date']);
+  document.getElementById('pa-name').value = p['Sender Name']||'';
+  document.getElementById('pa-issue').value = p['Body']||'';
+  // Clear reviewer fields
+  document.getElementById('pa-logged-by').value = '';
+  document.getElementById('pa-area').value = '';
+  document.getElementById('pa-trade').value = '';
+  document.getElementById('pa-action').value = '';
+  // Show attachments if any
+  const files = (p['Attachments']||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const wrap = document.getElementById('pa-attachments-wrap');
+  const attEl = document.getElementById('pa-attachments');
+  if (files.length) {
+    wrap.style.display = 'block';
+    attEl.innerHTML = files.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);margin-right:10px">📎 Attachment ${i+1}</a>`).join('');
+  } else {
+    wrap.style.display = 'none';
+  }
+  document.getElementById('pending-approve-modal-bg').classList.add('open');
+}
+
+function closePendingApproveModal() {
+  document.getElementById('pending-approve-modal-bg').classList.remove('open');
+}
+
+async function approvePendingIssue() {
+  const rowIndex = document.getElementById('pa-row').value;
+  const date     = document.getElementById('pa-date').value;
+  const name     = document.getElementById('pa-name').value.trim();
+  const issue    = document.getElementById('pa-issue').value.trim();
+  const loggedBy = document.getElementById('pa-logged-by').value;
+  const area     = document.getElementById('pa-area').value;
+  // Validate
+  const checks = [['pa-date',date],['pa-name',name],['pa-issue',issue],['pa-logged-by',loggedBy],['pa-area',area]];
+  let valid = true;
+  checks.forEach(([id,val])=>{ const el=document.getElementById(id); if(!val){el.style.borderColor='#C0392B';valid=false;}else el.style.borderColor=''; });
+  if (!valid) { showToast('Please fill in all required fields','error'); return; }
+  const btn=document.getElementById('pa-save-btn'), sp=document.getElementById('pa-spinner');
+  btn.disabled=true; document.getElementById('pa-save-text').textContent='Saving…'; sp.classList.add('active');
+  // Get attachment links from pending row
+  const p = (pendingData||[]).find(x=>x.rowIndex==rowIndex);
+  const media = p ? (p['Attachments']||'') : '';
+  const now = new Date().toLocaleDateString('en-AU',{timeZone:'Australia/Sydney'});
+  const payload = {
+    action: 'approvePending',
+    pendingRowIndex: parseInt(rowIndex),
+    "Date":                 date,
+    "Originally Logged By": loggedBy,
+    "Resident Name":        name,
+    "Unit Number":          "",
+    "How Logged":           "Email",
+    "Category":             area,
+    "Issue":                issue,
+    "Trade Assigned":       document.getElementById('pa-trade').value||'',
+    "Action Taken":         document.getElementById('pa-action').value.trim(),
+    "Response How":         "",
+    "Response Date":        "",
+    "Response By":          "",
+    "Cost":                 "",
+    "Media":                media,
+    "Status":               "Open",
+    "Last Updated":         now,
+    "Logged By":            loggedBy,
+    "Awaiting Info":        "",
+    "Awaiting What":        "",
+    "Awaiting By Who":      "",
+    files: []
+  };
+  try {
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify(payload));
+    await fetch(url);
+    showToast('✅ Issue logged successfully!','success');
+    pendingData = pendingData.filter(x=>x.rowIndex!=rowIndex);
+    closePendingApproveModal();
+    renderPendingList();
+    allIssues = null; // force reload of issues
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { btn.disabled=false; document.getElementById('pa-save-text').textContent='✅ Approve & Log Issue'; sp.classList.remove('active'); }
+}
+
+async function rejectPending(rowIndex) {
+  const p = (pendingData||[]).find(x=>x.rowIndex==rowIndex);
+  const subject = p ? (p['Subject']||'this submission') : 'this submission';
+  // Ask delete or archive
+  const choice = confirm(
+    `Reject "${subject}"?\n\nClick OK to DELETE permanently.\nClick Cancel to go back (use the Archive option if you want to keep a record).`
+  );
+  if (!choice) {
+    // Offer archive instead
+    const archive = confirm('Would you like to ARCHIVE this submission instead (keeps a record but removes from Pending)?');
+    if (!archive) return;
+    await rejectPendingAction(rowIndex, 'archive');
+  } else {
+    await rejectPendingAction(rowIndex, 'delete');
+  }
+}
+
+async function rejectPendingAction(rowIndex, action) {
+  try {
+    const url = SCRIPT_URL+'?payload='+encodeURIComponent(JSON.stringify({action:'rejectPending', rowIndex:parseInt(rowIndex), rejectAction:action}));
+    await fetch(url);
+    showToast(action==='archive'?'📦 Submission archived':'🗑️ Submission deleted','success');
+    pendingData = pendingData.filter(x=>x.rowIndex!=rowIndex);
+    renderPendingList();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+}
+
 // ══════════════════════════════
 // NOTIFICATION SETTINGS
 // ══════════════════════════════
 let notifData = null; // [{email, newIssue, editIssue, newMinutes, editMinutes, newQuote, quoteStatus, rowIndex}]
 
 const NOTIF_EVENTS = [
-  {key:'newIssue',    label:'New Issue'},
-  {key:'editIssue',  label:'Issue Edited'},
-  {key:'newMinutes', label:'New Minutes'},
-  {key:'editMinutes',label:'Minutes Edited'},
-  {key:'newQuote',   label:'New Quote'},
-  {key:'quoteStatus',label:'Quote Status Changed'},
+  {key:'newIssue',     label:'New Issue'},
+  {key:'editIssue',   label:'Issue Edited'},
+  {key:'newMinutes',  label:'New Minutes'},
+  {key:'editMinutes', label:'Minutes Edited'},
+  {key:'newQuote',    label:'New Quote'},
+  {key:'quoteStatus', label:'Quote Status Changed'},
+  {key:'pendingIssue',label:'📬 Pending Email Submission'},
 ];
 
 async function openNotifModal() {
@@ -2319,6 +2491,74 @@ setTimeout(() => setEditMode(editMode), 100);
     <div class="modal-actions" style="margin-top:1.4rem">
       <button class="btn-secondary" onclick="closeNotifModal()">Close</button>
       <button class="btn-primary" onclick="saveNotifSettings()"><span id="notif-save-text">Save All Settings</span><div class="spinner" id="notif-spinner"></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APPROVE PENDING ISSUE MODAL ══ -->
+<div class="modal-bg" id="pending-approve-modal-bg" onclick="if(event.target===this)closePendingApproveModal()">
+  <div class="modal-box" style="max-width:760px">
+    <h2>✅ Review &amp; Approve Pending Issue</h2>
+    <input type="hidden" id="pa-row" />
+    <div class="modal-section">Pre-filled from Email</div>
+    <div class="edit-field">
+      <label>Date <span class="req">*</span></label>
+      <input type="date" id="pa-date" />
+    </div>
+    <div class="edit-field">
+      <label>Resident Name <span class="req">*</span></label>
+      <input type="text" id="pa-name" placeholder="Name from email sender" />
+    </div>
+    <div class="edit-field">
+      <label>Issue / Feedback <span class="req">*</span></label>
+      <textarea id="pa-issue" rows="5" style="width:100%;padding:10px;border:1px solid #dde3ea;border-radius:8px;font-size:.85rem;resize:vertical"></textarea>
+    </div>
+    <div class="modal-section">To Be Completed by Reviewer</div>
+    <div class="edit-field">
+      <label>Logged By <span class="req">*</span></label>
+      <select id="pa-logged-by">
+        <option value="" disabled selected>Select name…</option>
+        <option>Ken Barker</option><option>Barry Williams</option>
+        <option>Sherrol Gane</option><option>Peter Metman</option>
+        <option>Stefan Jankowski</option><option>Geoff Bursill</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Category <span class="req">*</span></label>
+      <select id="pa-area">
+        <option value="" disabled selected>Select category…</option>
+        <option>Common Area</option><option>Door</option><option>Electrical</option>
+        <option>Fobs</option><option>Garage Door</option><option>Garden</option>
+        <option>Gate</option><option>General Maintenance</option><option>Irrigation</option>
+        <option>Keys</option><option>Lift</option><option>Painting</option>
+        <option>Plumbing</option><option>Rubbish/Waste</option><option>Security</option><option>Other</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Trade Assigned</label>
+      <select id="pa-trade">
+        <option value="">— Select trade —</option>
+        <option>Building Manager</option><option>Carpenter/Builder</option>
+        <option>Cleaner</option><option>Committee Member</option><option>Contractor</option>
+        <option>Cove Gardener</option><option>Electrician</option><option>Handyman</option>
+        <option>Lift Tech</option><option>Locksmith</option><option>Painter</option>
+        <option>Plumber</option><option>Strata Manager</option><option>Other</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Action Taken</label>
+      <textarea id="pa-action" rows="3" style="width:100%;padding:10px;border:1px solid #dde3ea;border-radius:8px;font-size:.85rem;resize:vertical" placeholder="Optional — add any action taken"></textarea>
+    </div>
+    <div id="pa-attachments-wrap" style="display:none">
+      <div class="modal-section">Attachments from Email</div>
+      <div id="pa-attachments" style="font-size:.82rem;color:var(--slate)"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closePendingApproveModal()">Cancel</button>
+      <button class="btn-primary" id="pa-save-btn" onclick="approvePendingIssue()">
+        <span id="pa-save-text">✅ Approve &amp; Log Issue</span>
+        <div class="spinner" id="pa-spinner"></div>
+      </button>
     </div>
   </div>
 </div>
